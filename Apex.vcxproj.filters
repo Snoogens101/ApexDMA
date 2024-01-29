@@ -16,6 +16,15 @@
     <Filter Include="DMALibrary">
       <UniqueIdentifier>{d169a2c8-1bdd-47c3-9d1b-2c193654719f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math">
+      <UniqueIdentifier>{9e172be1-ce20-4fcd-9c5e-4376e978debb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Util">
+      <UniqueIdentifier>{82544f86-b447-4ac6-a4b4-1a277a2a2125}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{7a69f745-3530-4911-8171-7c8cfd92fa0e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DMALibrary\DMALibrary.cpp">
@@ -68,25 +77,34 @@
     <ClInclude Include="DMALibrary\pch.h">
       <Filter>DMALibrary</Filter>
     </ClInclude>
-    <ClInclude Include="Offsets.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Matrix.hpp">
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="QAngle.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Resolver.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Vector2D.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Vector3D.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Vector4D.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Matrix.hpp">
+    <ClInclude Include="Offsets.hpp">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalPlayer.hpp">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="HitboxType.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

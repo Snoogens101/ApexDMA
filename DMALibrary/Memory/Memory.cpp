@@ -796,3 +796,7 @@ void Memory::ExecuteWriteScatter(VMMDLL_SCATTER_HANDLE handle, int pid)
 		LOG("[-] Failed to clear Scatter\n");
 	}
 }
+
+bool Memory::IsValidPointer(long Pointer) {
+	return Pointer > 0x00010000 && Pointer < 0x7FFFFFFEFFFF;
+}

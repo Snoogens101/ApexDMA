@@ -155,8 +155,11 @@
     <ClInclude Include="DMALibrary\Memory\Shellcode.h" />
     <ClInclude Include="DMALibrary\nt\structs.h" />
     <ClInclude Include="DMALibrary\pch.h" />
+    <ClInclude Include="HitboxType.hpp" />
+    <ClInclude Include="LocalPlayer.hpp" />
     <ClInclude Include="Matrix.hpp" />
     <ClInclude Include="Offsets.hpp" />
+    <ClInclude Include="Player.hpp" />
     <ClInclude Include="QAngle.hpp" />
     <ClInclude Include="Resolver.hpp" />
     <ClInclude Include="Vector2D.hpp" />
