@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="DMALibrary">
+      <UniqueIdentifier>{d169a2c8-1bdd-47c3-9d1b-2c193654719f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DMALibrary\DMALibrary.cpp">
+      <Filter>DMALibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="DMALibrary\Memory\InputManager.cpp">
+      <Filter>DMALibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="DMALibrary\Memory\Memory.cpp">
+      <Filter>DMALibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="DMALibrary\Memory\Registry.cpp">
+      <Filter>DMALibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="DMALibrary\Memory\Shellcode.cpp">
+      <Filter>DMALibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="DMALibrary\pch.cpp">
+      <Filter>DMALibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DMALibrary\framework.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\libs\leechcore.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\libs\vmmdll.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\Memory\InputManager.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\Memory\Memory.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\Memory\Registry.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\Memory\Shellcode.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\nt\structs.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="DMALibrary\pch.h">
+      <Filter>DMALibrary</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
