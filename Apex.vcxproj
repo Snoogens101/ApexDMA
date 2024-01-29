@@ -155,6 +155,13 @@
     <ClInclude Include="DMALibrary\Memory\Shellcode.h" />
     <ClInclude Include="DMALibrary\nt\structs.h" />
     <ClInclude Include="DMALibrary\pch.h" />
+    <ClInclude Include="Matrix.hpp" />
+    <ClInclude Include="Offsets.hpp" />
+    <ClInclude Include="QAngle.hpp" />
+    <ClInclude Include="Resolver.hpp" />
+    <ClInclude Include="Vector2D.hpp" />
+    <ClInclude Include="Vector3D.hpp" />
+    <ClInclude Include="Vector4D.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
