@@ -183,6 +183,12 @@ bool UpdateCore() {
             // Call the scatter function to read all player attributes
             ScatterReadPlayerAttributes(*Players);
 
+            // Update Players //
+            for (int i = 0; i < Players->size(); i++) {
+				Player* p = Players->at(i);
+				p->Read();
+			}
+
             // Updates //
             //GameCamera->Update();
             //AimAssist->Update();

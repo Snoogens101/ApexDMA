@@ -60,7 +60,6 @@ struct Player {
     void Read() {
         if (BasePointer == 0) return;
         if (!IsPlayer() && !IsDummy()) { BasePointer = 0; return; }
-        // Scatters for BasePointer, Team and Name have been done after this point
 
         IsAimedAt = LastTimeAimedAtPrevious < LastTimeAimedAt;
         LastTimeAimedAtPrevious = LastTimeAimedAt;
