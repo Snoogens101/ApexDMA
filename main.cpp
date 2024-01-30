@@ -146,14 +146,12 @@ bool UpdateCore() {
             if (!Map->IsPlayable) {
                 return true;
             }
-            std::cout << "Map is playable" << std::endl;
 
             // Read Local Player //
             Myself->Read();
             if (!Myself->IsValid()) {
                 return true;
             }
-            std::cout << "Local Player is valid" << std::endl;
 
             // Call the scatter function to read BasePointers, Team and Name for all players
             if (Map->IsFiringRange){
@@ -167,7 +165,6 @@ bool UpdateCore() {
 
             // Populate Players //
             Players->clear();
-            std::cout << "Map is firing range: " << Map->IsFiringRange << std::endl;
             if (Map->IsFiringRange) {
                 for (int i = 0; i < Dummies->size(); i++) {
                     Player* p = Dummies->at(i);

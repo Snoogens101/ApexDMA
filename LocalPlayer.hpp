@@ -37,33 +37,95 @@ struct LocalPlayer {
         BasePointer = mem.Read<long long>(OFF_BASE + OFF_LOCAL_PLAYER);
         if (BasePointer == 0) return;
 
-        IsDead = mem.Read<short>(BasePointer + OFF_LIFE_STATE) > 0;
-        IsKnocked = mem.Read<short>(BasePointer + OFF_BLEEDOUT_STATE) > 0;
-        IsZooming = mem.Read<short>(BasePointer + OFF_ZOOMING) > 0;
         IsInAttack = mem.Read<short>(OFF_BASE + OFF_INATTACK) > 0;
 
-        Team = mem.Read<int>(BasePointer + OFF_TEAM_NUMBER);
-        LocalOrigin = mem.Read<Vector3D>(BasePointer + OFF_LOCAL_ORIGIN);
-        CameraPosition = mem.Read<Vector3D>(BasePointer + OFF_CAMERAORIGIN);
-        ViewAngles = mem.Read<Vector2D>(BasePointer + OFF_VIEW_ANGLES);
-        PunchAngles = mem.Read<Vector2D>(BasePointer + OFF_PUNCH_ANGLES);
+        auto handle = mem.CreateScatterHandle();
 
-        ViewYaw = mem.Read<float>(BasePointer + OFF_YAW);
+        // Scatter read request for IsDead
+        uint64_t isDeadAddress = BasePointer + OFF_LIFE_STATE;
+        mem.AddScatterReadRequest(handle, isDeadAddress, &IsDead, sizeof(bool));
 
-        if (!IsDead && !IsKnocked) {
-            long WeaponHandle = mem.Read<long long>(BasePointer + OFF_WEAPON_HANDLE);
-            long WeaponHandleMasked = WeaponHandle & 0xffff;
-            long WeaponEntity = mem.Read<long long>(OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
+        // Scatter read request for IsKnocked
+        uint64_t isKnockedAddress = BasePointer + OFF_BLEEDOUT_STATE;
+        mem.AddScatterReadRequest(handle, isKnockedAddress, &IsKnocked, sizeof(bool));
 
-            int OffHandWeaponID = mem.Read<int>(BasePointer + OFF_OFFHAND_WEAPON);
+        // Scatter read request for IsZooming
+        uint64_t isZoomingAddress = BasePointer + OFF_ZOOMING;
+        mem.AddScatterReadRequest(handle, isZoomingAddress, &IsZooming, sizeof(bool));
+
+        // Scatter read request for Team
+        uint64_t teamAddress = BasePointer + OFF_TEAM_NUMBER;
+		mem.AddScatterReadRequest(handle, teamAddress, &Team, sizeof(int));
+
+        // Scatter read request for LocalOrigin
+        uint64_t localOriginAddress = BasePointer + OFF_LOCAL_ORIGIN;
+		mem.AddScatterReadRequest(handle, localOriginAddress, &LocalOrigin, sizeof(Vector3D));
+
+        // Scatter read request for CameraPosition
+        uint64_t cameraPositionAddress = BasePointer + OFF_CAMERAORIGIN;
+		mem.AddScatterReadRequest(handle, cameraPositionAddress, &CameraPosition, sizeof(Vector3D));
+
+        // Scatter read request for ViewAngles
+        uint64_t viewAnglesAddress = BasePointer + OFF_VIEW_ANGLES;
+		mem.AddScatterReadRequest(handle, viewAnglesAddress, &ViewAngles, sizeof(Vector2D));
+
+        // Scatter read request for PunchAngles
+        uint64_t punchAnglesAddress = BasePointer + OFF_PUNCH_ANGLES;
+		mem.AddScatterReadRequest(handle, punchAnglesAddress, &PunchAngles, sizeof(Vector2D));
+
+        // Scatter read request for ViewYaw
+        uint64_t viewYawAddress = BasePointer + OFF_YAW;
+		mem.AddScatterReadRequest(handle, viewYawAddress, &ViewYaw, sizeof(float));
+
+        // Scatter read request for WeaponHandle
+        long long WeaponHandle;
+        uint64_t weaponHandleAddress = BasePointer + OFF_WEAPON_HANDLE;
+		mem.AddScatterReadRequest(handle, weaponHandleAddress, &WeaponHandle, sizeof(long long));
+
+        // Scatter read request for OffhandWeaponID
+        int OffHandWeaponID;
+        uint64_t offhandWeaponIDAddress = BasePointer + OFF_OFFHAND_WEAPON;
+		mem.AddScatterReadRequest(handle, offhandWeaponIDAddress, &OffHandWeaponID, sizeof(int));
+
+        // Execute the scatter read
+        mem.ExecuteReadScatter(handle);
+
+        // Close the scatter handle
+        mem.CloseScatterHandle(handle);
+
+        if (!IsDead && !IsKnocked && WeaponHandle) {
+            long long WeaponHandleMasked = WeaponHandle & 0xffff;
+            long long WeaponEntity = mem.Read<long long>(OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
+
             IsHoldingGrenade = OffHandWeaponID == -251 ? true : false;
 
-            ZoomFOV = mem.Read<float>(WeaponEntity + OFF_CURRENTZOOMFOV);
-            TargetZoomFOV = mem.Read<float>(WeaponEntity + OFF_TARGETZOOMFOV);
+            auto handle = mem.CreateScatterHandle();
 
-            WeaponIndex = mem.Read<int>(WeaponEntity + OFF_WEAPON_INDEX);
-            WeaponProjectileSpeed = mem.Read<float>(WeaponEntity + OFF_PROJECTILESPEED);
-            WeaponProjectileScale = mem.Read<float>(WeaponEntity + OFF_PROJECTILESCALE);
+            // Scatter read request for ZoomFOV
+            uint64_t zoomFOVAddress = WeaponEntity + OFF_CURRENTZOOMFOV;
+            mem.AddScatterReadRequest(handle, zoomFOVAddress, &ZoomFOV, sizeof(float));
+
+            // Scatter read request for TargetZoomFOV
+            uint64_t targetZoomFOVAddress = WeaponEntity + OFF_TARGETZOOMFOV;
+            mem.AddScatterReadRequest(handle, targetZoomFOVAddress, &TargetZoomFOV, sizeof(float));
+
+            // Scatter read request for WeaponIndex
+            uint64_t weaponIndexAddress = WeaponEntity + OFF_WEAPON_INDEX;
+            mem.AddScatterReadRequest(handle, weaponIndexAddress, &WeaponIndex, sizeof(int));
+
+            // Scatter read request for WeaponProjectileSpeed
+            uint64_t weaponProjectileSpeedAddress = WeaponEntity + OFF_PROJECTILESPEED;
+            mem.AddScatterReadRequest(handle, weaponProjectileSpeedAddress, &WeaponProjectileSpeed, sizeof(float));
+
+            // Scatter read request for WeaponProjectileScale
+            uint64_t weaponProjectileScaleAddress = WeaponEntity + OFF_PROJECTILESCALE;
+            mem.AddScatterReadRequest(handle, weaponProjectileScaleAddress, &WeaponProjectileScale, sizeof(float));
+
+            // Execute the scatter read
+            mem.ExecuteReadScatter(handle);
+
+            // Close the scatter handle
+            mem.CloseScatterHandle(handle);
         }
     }
 
