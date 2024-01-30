@@ -12,8 +12,9 @@ struct Player {
     LocalPlayer* Myself;
 
     int Index;
-    long long BasePointer;
+    long long BasePointer = 0;
 
+    char NameBuffer[8] = { 0 };
     std::string Name;
     int Team;
 
@@ -57,42 +58,15 @@ struct Player {
     }
 
     void Read() {
-        BasePointer = mem.Read<long long>(OFF_BASE + OFF_ENTITY_LIST + ((Index + 1) << 5));
         if (BasePointer == 0) return;
-
-        char buffer[8] = { 0 };
-        bool success = mem.Read(BasePointer + OFF_NAME, &buffer, 8);
-        if (!success) {
-			Name = "Unknown";
-		}
-        else {
-			Name = std::string(buffer);
-		}
-        Team = mem.Read<int>(BasePointer + OFF_TEAM_NUMBER);
-
         if (!IsPlayer() && !IsDummy()) { BasePointer = 0; return; }
-        IsDead = (IsDummy()) ? false : mem.Read<short>(BasePointer + OFF_LIFE_STATE) > 0;
-        IsKnocked = (IsDummy()) ? false : mem.Read<short>(BasePointer + OFF_BLEEDOUT_STATE) > 0;
+        // Scatters for BasePointer, Team and Name have been done after this point
 
-        LocalOrigin = mem.Read<Vector3D>(BasePointer + OFF_LOCAL_ORIGIN);
-        AbsoluteVelocity = mem.Read<Vector3D>(BasePointer + OFF_ABSVELOCITY);
-
-        GlowEnable = mem.Read<int>(BasePointer + OFF_GLOW_ENABLE);
-        GlowThroughWall = mem.Read<int>(BasePointer + OFF_GLOW_THROUGH_WALL);
-        HighlightID = mem.Read<int>(BasePointer + OFF_GLOW_HIGHLIGHT_ID + 1);
-
-        LastTimeAimedAt = mem.Read<int>(BasePointer + OFF_LAST_AIMEDAT_TIME);
         IsAimedAt = LastTimeAimedAtPrevious < LastTimeAimedAt;
         LastTimeAimedAtPrevious = LastTimeAimedAt;
 
-        LastVisibleTime = mem.Read<int>(BasePointer + OFF_LAST_VISIBLE_TIME);
         IsVisible = IsDummy() || IsAimedAt || LastTimeVisiblePrevious < LastVisibleTime;
         LastTimeVisiblePrevious = LastVisibleTime;
-
-        Health = mem.Read<int>(BasePointer + OFF_HEALTH);
-        MaxHealth = mem.Read<int>(BasePointer + OFF_MAXHEALTH);
-        Shield = mem.Read<int>(BasePointer + OFF_SHIELD);
-        MaxShield = mem.Read<int>(BasePointer + OFF_MAXSHIELD);
 
         if (Myself->IsValid()) {
             IsLocal = Myself->BasePointer == BasePointer;

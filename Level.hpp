@@ -17,7 +17,7 @@ struct Level {
         else {
             Name = std::string(buffer);
         }
-        std::cout << "Level: " << Name << std::endl;
+
         IsPlayable = !Name.empty() && Name != "mp_lobby";
         IsFiringRange = Name == "mp_rr_canyonlands_staging_mu1";
     }
