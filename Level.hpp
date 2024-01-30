@@ -4,18 +4,16 @@
 
 struct Level {
     std::string Name;
+    char NameBuffer[1024] = { 0 };
     bool IsPlayable;
     bool IsFiringRange;
 
     void Read() {
-        char buffer[1024] = { 0 };
-        bool success = mem.Read(OFF_BASE + OFF_LEVEL, &buffer, 1024);
-
-        if (!success) {
+        if (!NameBuffer) {
             Name = "Unknown";
         }
         else {
-            Name = std::string(buffer);
+            Name = std::string(NameBuffer);
         }
 
         IsPlayable = !Name.empty() && Name != "mp_lobby";

@@ -11,6 +11,7 @@
 struct Camera {
     Vector2D ScreenSize;
     ViewMatrix GameViewMatrix;
+    long long RenderPointer;
 
     void Initialize(int Width, int Height) {
         ScreenSize = Vector2D(Width, Height);
@@ -21,8 +22,7 @@ struct Camera {
     }
 
     void Update() {
-        long RenderPtr = mem.Read<long long>(OFF_BASE + OFF_VIEWRENDER);
-        long MatrixPtr = mem.Read<long long>(RenderPtr + OFF_VIEWMATRIX);
+        long long MatrixPtr = mem.Read<long long>(RenderPointer + OFF_VIEWMATRIX);
         GameViewMatrix = mem.Read<ViewMatrix>(MatrixPtr);
     }
 

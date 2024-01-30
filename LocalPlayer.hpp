@@ -37,8 +37,6 @@ struct LocalPlayer {
         BasePointer = mem.Read<long long>(OFF_BASE + OFF_LOCAL_PLAYER);
         if (BasePointer == 0) return;
 
-        IsInAttack = mem.Read<short>(OFF_BASE + OFF_INATTACK) > 0;
-
         auto handle = mem.CreateScatterHandle();
 
         // Scatter read request for IsDead

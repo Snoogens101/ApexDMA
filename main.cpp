@@ -20,6 +20,33 @@ std::vector<Player*>* HumanPlayers = new std::vector<Player*>;
 std::vector<Player*>* Dummies = new std::vector<Player*>;
 std::vector<Player*>* Players = new std::vector<Player*>;
 
+void MiscBaseScatter(Level* map, LocalPlayer* myself, Camera* gameCamera) {
+	// Create scatter handle
+	auto handle = mem.CreateScatterHandle();
+
+	// Scatter read request for Level
+	uint64_t levelAddress = OFF_BASE + OFF_LEVEL;
+	mem.AddScatterReadRequest(handle, levelAddress, &map->NameBuffer, sizeof(map->NameBuffer));
+
+	// Scatter read request for LocalPlayer BasePointer
+	uint64_t localPlayerAddress = OFF_BASE + OFF_LOCAL_PLAYER;
+	mem.AddScatterReadRequest(handle, localPlayerAddress, &myself->BasePointer, sizeof(long long));
+
+	// Scatter read request for LocalPlayer inAttack
+	uint64_t inAttackAddress = OFF_BASE + OFF_INATTACK;
+	mem.AddScatterReadRequest(handle, inAttackAddress, &myself->IsInAttack, sizeof(bool));
+
+	// Scatter read request for GameCamera
+	uint64_t cameraRenderPointer = OFF_BASE + OFF_VIEWRENDER;
+	mem.AddScatterReadRequest(handle, cameraRenderPointer, &gameCamera->RenderPointer, sizeof(long long));
+
+	// Execute the scatter read
+	mem.ExecuteReadScatter(handle);
+
+	// Close the scatter handle
+	mem.CloseScatterHandle(handle);
+}
+
 void PlayerBasePointerScatter(std::vector<Player*>& players) {
     // Create scatter handle
     auto handle = mem.CreateScatterHandle();
@@ -126,6 +153,22 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
             mem.AddScatterReadRequest(handle, maxHealthAddress, &player->MaxHealth, sizeof(int));
             mem.AddScatterReadRequest(handle, shieldAddress, &player->Shield, sizeof(int));
             mem.AddScatterReadRequest(handle, maxShieldAddress, &player->MaxShield, sizeof(int));
+
+            if (!player->IsDummy() || player->IsPlayer()) {
+				// Scatter read request for ViewYaw
+                uint64_t viewYawAddress = player->BasePointer + OFF_YAW;
+				mem.AddScatterReadRequest(handle, viewYawAddress, &player->ViewYaw, sizeof(float));
+			}
+
+            if (player->IsDummy() || player->IsPlayer()) {
+                // Scatter read request for ModelPointer
+                uint64_t modelPointerAddress = player->BasePointer + OFF_STUDIOHDR;
+                mem.AddScatterReadRequest(handle, modelPointerAddress, &player->ModelPointer, sizeof(long long));
+
+				// Scatter read request for BonePtr
+				uint64_t bonePointerAddress = player->BasePointer + OFF_BONES;
+				mem.AddScatterReadRequest(handle, bonePointerAddress, &player->BonePointer, sizeof(long long));
+            }
         }
     }
 
@@ -140,6 +183,9 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
 bool UpdateCore() {
     try {
         while (true) {
+            // Initial Misc Reads //
+            MiscBaseScatter(Map, Myself, GameCamera);
+
             // Map Checking //
             Map->Read();
             std::cout << "Map: " << Map->Name << std::endl;
@@ -190,11 +236,10 @@ bool UpdateCore() {
 			}
 
             // Updates //
-            //GameCamera->Update();
+            GameCamera->Update();
             //AimAssist->Update();
             //Trigger->Update();
         }
-        return true;
     }
     catch (const std::exception& ex) {
         std::system("clear");
