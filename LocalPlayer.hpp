@@ -5,7 +5,7 @@
 #include "Vector3D.hpp"
 
 struct LocalPlayer {
-    long BasePointer;
+    long long BasePointer;
 
     bool IsDead;
     bool IsInAttack;
@@ -34,13 +34,13 @@ struct LocalPlayer {
     }
 
     void Read() {
-        BasePointer = mem.Read<long>(OFF_REGION + OFF_LOCAL_PLAYER);
+        BasePointer = mem.Read<long long>(OFF_BASE + OFF_LOCAL_PLAYER);
         if (BasePointer == 0) return;
 
         IsDead = mem.Read<short>(BasePointer + OFF_LIFE_STATE) > 0;
         IsKnocked = mem.Read<short>(BasePointer + OFF_BLEEDOUT_STATE) > 0;
         IsZooming = mem.Read<short>(BasePointer + OFF_ZOOMING) > 0;
-        IsInAttack = mem.Read<short>(OFF_REGION + OFF_INATTACK) > 0;
+        IsInAttack = mem.Read<short>(OFF_BASE + OFF_INATTACK) > 0;
 
         Team = mem.Read<int>(BasePointer + OFF_TEAM_NUMBER);
         LocalOrigin = mem.Read<Vector3D>(BasePointer + OFF_LOCAL_ORIGIN);
@@ -51,9 +51,9 @@ struct LocalPlayer {
         ViewYaw = mem.Read<float>(BasePointer + OFF_YAW);
 
         if (!IsDead && !IsKnocked) {
-            long WeaponHandle = mem.Read<long>(BasePointer + OFF_WEAPON_HANDLE);
+            long WeaponHandle = mem.Read<long long>(BasePointer + OFF_WEAPON_HANDLE);
             long WeaponHandleMasked = WeaponHandle & 0xffff;
-            long WeaponEntity = mem.Read<long>(OFF_REGION + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
+            long WeaponEntity = mem.Read<long long>(OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
 
             int OffHandWeaponID = mem.Read<int>(BasePointer + OFF_OFFHAND_WEAPON);
             IsHoldingGrenade = OffHandWeaponID == -251 ? true : false;

@@ -104,13 +104,22 @@
     <ClInclude Include="Player.hpp">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="HitboxType.hpp">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="GlowMode.hpp">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Level.hpp">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Conversion.hpp">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.hpp">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="HitboxType.hpp">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.hpp">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
   </ItemGroup>

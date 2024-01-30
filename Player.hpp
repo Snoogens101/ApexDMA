@@ -12,7 +12,7 @@ struct Player {
     LocalPlayer* Myself;
 
     int Index;
-    long BasePointer;
+    long long BasePointer;
 
     std::string Name;
     int Team;
@@ -57,10 +57,17 @@ struct Player {
     }
 
     void Read() {
-        BasePointer = mem.Read<long>(OFF_REGION + OFF_ENTITY_LIST + ((Index + 1) << 5));
+        BasePointer = mem.Read<long long>(OFF_BASE + OFF_ENTITY_LIST + ((Index + 1) << 5));
         if (BasePointer == 0) return;
 
-        Name = mem.Read<std::string>(BasePointer + OFF_NAME);
+        char buffer[8] = { 0 };
+        bool success = mem.Read(BasePointer + OFF_NAME, &buffer, 8);
+        if (!success) {
+			Name = "Unknown";
+		}
+        else {
+			Name = std::string(buffer);
+		}
         Team = mem.Read<int>(BasePointer + OFF_TEAM_NUMBER);
 
         if (!IsPlayer() && !IsDummy()) { BasePointer = 0; return; }
@@ -98,7 +105,7 @@ struct Player {
 
     std::string GetPlayerName() {
         uintptr_t NameIndex = mem.Read<uintptr_t>(BasePointer + OFF_NAME_INDEX);
-        uintptr_t NameOffset = mem.Read<uintptr_t>(OFF_REGION + OFF_NAME_LIST + ((NameIndex - 1) << 4));
+        uintptr_t NameOffset = mem.Read<uintptr_t>(OFF_BASE + OFF_NAME_LIST + ((NameIndex - 1) << 4));
 
         char buffer[64] = { 0 };
         bool success = mem.Read(NameOffset, &buffer, 64);
@@ -107,7 +114,7 @@ struct Player {
             return "Unknown";
         }
 
-        return std::string(buffer, 64);
+        return std::string(buffer);
     }
 
 
@@ -140,11 +147,11 @@ struct Player {
 
     // Bones //
     int GetBoneFromHitbox(HitboxType HitBox) const {
-        long ModelPointer = mem.Read<long>(BasePointer + OFF_STUDIOHDR);
+        long ModelPointer = mem.Read<long long>(BasePointer + OFF_STUDIOHDR);
         if (!mem.IsValidPointer(ModelPointer))
             return -1;
 
-        long StudioHDR = mem.Read<long>(ModelPointer + 0x8);
+        long StudioHDR = mem.Read<long long>(ModelPointer + 0x8);
         if (!mem.IsValidPointer(StudioHDR + 0x34))
             return -1;
 
@@ -169,7 +176,7 @@ struct Player {
         if (Bone < 0 || Bone > 255)
             return LocalOrigin.Add(Offset);
 
-        long BonePtr = mem.Read<long>(BasePointer + OFF_BONES);
+        long BonePtr = mem.Read<long long>(BasePointer + OFF_BONES);
         BonePtr += (Bone * sizeof(Matrix3x4));
         if (!mem.IsValidPointer(BonePtr))
             return LocalOrigin.Add(Offset);

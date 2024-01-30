@@ -146,6 +146,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="Color.hpp" />
+    <ClInclude Include="Conversion.hpp" />
     <ClInclude Include="DMALibrary\framework.h" />
     <ClInclude Include="DMALibrary\libs\leechcore.h" />
     <ClInclude Include="DMALibrary\libs\vmmdll.h" />
