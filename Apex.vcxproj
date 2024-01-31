@@ -158,6 +158,7 @@
     <ClInclude Include="DMALibrary\Memory\Shellcode.h" />
     <ClInclude Include="DMALibrary\nt\structs.h" />
     <ClInclude Include="DMALibrary\pch.h" />
+    <ClInclude Include="Glow.hpp" />
     <ClInclude Include="GlowMode.hpp" />
     <ClInclude Include="HitboxType.hpp" />
     <ClInclude Include="Level.hpp" />

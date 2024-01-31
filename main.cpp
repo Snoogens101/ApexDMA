@@ -5,6 +5,7 @@
 #include "Player.hpp"
 #include "LocalPlayer.hpp"
 #include "Camera.hpp"
+#include "Glow.hpp"
 #include <thread>
 
 // Base Address
@@ -19,6 +20,9 @@ Camera* GameCamera = new Camera();
 std::vector<Player*>* HumanPlayers = new std::vector<Player*>;
 std::vector<Player*>* Dummies = new std::vector<Player*>;
 std::vector<Player*>* Players = new std::vector<Player*>;
+
+// Features
+Sense* ESP = new Sense(Players, GameCamera, Myself);
 
 void MiscBaseScatter(Level* map, LocalPlayer* myself, Camera* gameCamera) {
 	// Create scatter handle
@@ -179,16 +183,20 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
     mem.CloseScatterHandle(handle);
 }
 
+bool once = false;
+
 // Core
 bool UpdateCore() {
     try {
         while (true) {
+            // Print Player Index 9057 GlowEnabled field
+            //std::cout << "9057 GlowEnabled: " << Players->at(9057)->GlowEnable << std::endl;
             // Initial Misc Reads //
             MiscBaseScatter(Map, Myself, GameCamera);
 
             // Map Checking //
             Map->Read();
-            std::cout << "Map: " << Map->Name << std::endl;
+            //std::cout << "Map: " << Map->Name << std::endl;
             if (!Map->IsPlayable) {
                 return true;
             }
@@ -210,21 +218,25 @@ bool UpdateCore() {
 			}
 
             // Populate Players //
-            Players->clear();
-            if (Map->IsFiringRange) {
-                for (int i = 0; i < Dummies->size(); i++) {
-                    Player* p = Dummies->at(i);
-                    if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
-                        Players->push_back(p);
+            //Players->clear();
+            if (!once) {
+                if (Map->IsFiringRange) {
+                    for (int i = 0; i < Dummies->size(); i++) {
+                        Player* p = Dummies->at(i);
+                        if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
+                            Players->push_back(p);
+                    }
                 }
-            }
-            else {
-                for (int i = 0; i < HumanPlayers->size(); i++) {
-                    Player* p = HumanPlayers->at(i);
-                    if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
-                        Players->push_back(p);
+                else {
+                    for (int i = 0; i < HumanPlayers->size(); i++) {
+                        Player* p = HumanPlayers->at(i);
+                        if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
+                            Players->push_back(p);
+                    }
                 }
+                once = true;
             }
+
 
             // Call the scatter function to read all player attributes
             ScatterReadPlayerAttributes(*Players);
@@ -237,6 +249,7 @@ bool UpdateCore() {
 
             // Updates //
             GameCamera->Update();
+            ESP->Update();
             //AimAssist->Update();
             //Trigger->Update();
         }
@@ -267,6 +280,8 @@ int main()
 
         for (int i = 0; i < 15000; i++)
             Dummies->push_back(new Player(i, Myself));
+
+        ESP->Initialize();
 
         std::cout << "Core initialized" << std::endl;
         std::cout << "-----------------------------" << std::endl;
