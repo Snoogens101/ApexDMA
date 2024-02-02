@@ -16,7 +16,7 @@ struct Level {
             Name = std::string(NameBuffer);
         }
 
-        IsPlayable = !Name.empty() && Name != "mp_lobby";
+        IsPlayable = !Name.empty() && Name != "mp_lobby" && Name != "Unknown";
         IsFiringRange = Name == "mp_rr_canyonlands_staging_mu1";
     }
 };

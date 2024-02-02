@@ -12,11 +12,11 @@ struct Player {
     LocalPlayer* Myself;
 
     int Index;
-    long long BasePointer = 0;
+    uint64_t BasePointer = 0;
 
-    long long ModelPointer = 0;
+    uint64_t ModelPointer = 0;
 
-    long long BonePointer = 0;
+    uint64_t BonePointer = 0;
 
     char NameBuffer[8] = { 0 };
     std::string Name;
@@ -41,6 +41,7 @@ struct Player {
     int LastTimeAimedAtPrevious;
     bool IsAimedAt;
 
+    float LastVisibleCheckTime;
     int LastVisibleTime;
     int LastTimeVisiblePrevious;
     bool IsVisible;
@@ -61,6 +62,38 @@ struct Player {
         this->Myself = Me;
     }
 
+    uint64_t GetMilliseconds()
+    {
+        LARGE_INTEGER PerformanceFrequency;
+        QueryPerformanceFrequency(&PerformanceFrequency);
+        LARGE_INTEGER CurrentPerformanceCount;
+        QueryPerformanceCounter(&CurrentPerformanceCount);
+        return (CurrentPerformanceCount.QuadPart/*microseconds*/ * 1000/*milliseconds*/) / PerformanceFrequency.QuadPart/*microseconds*/;
+    }
+
+    bool VisCheck() {
+        static float LastVisibleCheckTime = 0.0f; // Ensure this is initialized appropriately
+        static bool lastVisibleState = false; // Store the last visibility state
+        float VisibleCheckTime = GetMilliseconds();
+
+        if (VisibleCheckTime >= LastVisibleCheckTime + 5.0f) {
+            // Only update visibility state if enough time has passed
+            lastVisibleState = false; // Default to false at the start of each check
+
+            if (LastVisibleTime > LastTimeVisiblePrevious) {
+                lastVisibleState = true;
+            }
+            else if (LastVisibleTime < 0.0f && LastTimeVisiblePrevious > 0.0f) {
+                lastVisibleState = true;
+            }
+            LastTimeVisiblePrevious = LastVisibleTime; // Update after checking
+            LastVisibleCheckTime = VisibleCheckTime; // Update the check time
+        }
+
+        // Return the last known visibility state if not enough time has passed for a new check
+        return lastVisibleState;
+    }
+
     void Read() {
         if (BasePointer == 0) return;
         if (!IsPlayer() && !IsDummy()) { BasePointer = 0; return; }
@@ -68,8 +101,7 @@ struct Player {
         IsAimedAt = LastTimeAimedAtPrevious < LastTimeAimedAt;
         LastTimeAimedAtPrevious = LastTimeAimedAt;
 
-        IsVisible = IsDummy() || IsAimedAt || LastTimeVisiblePrevious < LastVisibleTime;
-        LastTimeVisiblePrevious = LastVisibleTime;
+        IsVisible = IsDummy() || IsAimedAt || VisCheck();
 
         if (Myself->IsValid()) {
             IsLocal = Myself->BasePointer == BasePointer;
@@ -127,7 +159,7 @@ struct Player {
         if (!mem.IsValidPointer(ModelPointer))
             return -1;
 
-        long long StudioHDR = mem.Read<long long>(ModelPointer + 0x8);
+        uint64_t StudioHDR = mem.Read<uint64_t>(ModelPointer + 0x8);
         if (!mem.IsValidPointer(StudioHDR + 0x34))
             return -1;
 
@@ -152,7 +184,7 @@ struct Player {
         if (Bone < 0 || Bone > 255)
             return LocalOrigin.Add(Offset);
 
-        long long TempBonePointer = BonePointer;  // Create a temporary non-const variable
+        uint64_t TempBonePointer = BonePointer;  // Create a temporary non-const variable
         TempBonePointer += (Bone * sizeof(Matrix3x4));
         if (!mem.IsValidPointer(TempBonePointer))
             return LocalOrigin.Add(Offset);

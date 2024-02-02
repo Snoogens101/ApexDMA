@@ -5,7 +5,7 @@
 #include "Vector3D.hpp"
 
 struct LocalPlayer {
-    long long BasePointer;
+    uint64_t BasePointer;
 
     bool IsDead;
     bool IsInAttack;
@@ -33,8 +33,15 @@ struct LocalPlayer {
         BasePointer = 0;
     }
 
+    bool ValidPosition() {
+		if (LocalOrigin.x != 0.0f && LocalOrigin.y != 0.0f && LocalOrigin.z != 0.0f) {
+            return true;
+		} else {
+			return false;
+		}
+	}
+
     void Read() {
-        BasePointer = mem.Read<long long>(OFF_BASE + OFF_LOCAL_PLAYER);
         if (BasePointer == 0) return;
 
         auto handle = mem.CreateScatterHandle();
@@ -76,9 +83,9 @@ struct LocalPlayer {
 		mem.AddScatterReadRequest(handle, viewYawAddress, &ViewYaw, sizeof(float));
 
         // Scatter read request for WeaponHandle
-        long long WeaponHandle;
+        uint64_t WeaponHandle;
         uint64_t weaponHandleAddress = BasePointer + OFF_WEAPON_HANDLE;
-		mem.AddScatterReadRequest(handle, weaponHandleAddress, &WeaponHandle, sizeof(long long));
+		mem.AddScatterReadRequest(handle, weaponHandleAddress, &WeaponHandle, sizeof(uint64_t));
 
         // Scatter read request for OffhandWeaponID
         int OffHandWeaponID;
@@ -92,8 +99,8 @@ struct LocalPlayer {
         mem.CloseScatterHandle(handle);
 
         if (!IsDead && !IsKnocked && WeaponHandle) {
-            long long WeaponHandleMasked = WeaponHandle & 0xffff;
-            long long WeaponEntity = mem.Read<long long>(OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
+            uint64_t WeaponHandleMasked = WeaponHandle & 0xffff;
+            uint64_t WeaponEntity = mem.Read<uint64_t>(OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
 
             IsHoldingGrenade = OffHandWeaponID == -251 ? true : false;
 

@@ -217,8 +217,8 @@ public:
 	* @param size The size of the buffer
 	* @return true if successful, false if not.
 	*/
-	bool Read(uintptr_t address, void* buffer, size_t size) const;
-	bool Read(uintptr_t address, void* buffer, size_t size, int pid) const;
+	bool Read(uintptr_t address, void* buffer, size_t size, bool cache = false) const;
+	bool Read(uintptr_t address, void* buffer, size_t size, int pid, bool cache = false) const;
 
 	/**
 	* brief Reads memory from the process using a template
@@ -226,19 +226,18 @@ public:
 	* @return the value read from the process
 	*/
 	template <typename T>
-	T Read(void* address)
+	T Read(void* address, bool cache = false)
 	{
-		T buffer { };
+		T buffer{ };
 		memset(&buffer, 0, sizeof(T));
-		Read(reinterpret_cast<uint64_t>(address), reinterpret_cast<void*>(&buffer), sizeof(T));
-
+		Read(reinterpret_cast<uint64_t>(address), reinterpret_cast<void*>(&buffer), sizeof(T), cache);
 		return buffer;
 	}
 
 	template <typename T>
-	T Read(uint64_t address)
+	T Read(uint64_t address, bool cache = false)
 	{
-		return Read<T>(reinterpret_cast<void*>(address));
+		return Read<T>(reinterpret_cast<void*>(address), cache);
 	}
 
 	/**
@@ -248,19 +247,18 @@ public:
 	* @return the value read from the process
 	*/
 	template <typename T>
-	T Read(void* address, int pid)
+	T Read(void* address, int pid, bool cache = false)
 	{
-		T buffer { };
+		T buffer{ };
 		memset(&buffer, 0, sizeof(T));
-		Read(reinterpret_cast<uint64_t>(address), reinterpret_cast<void*>(&buffer), sizeof(T), pid);
-
+		Read(reinterpret_cast<uint64_t>(address), reinterpret_cast<void*>(&buffer), sizeof(T), pid, cache);
 		return buffer;
 	}
 
 	template <typename T>
-	T Read(uint64_t address, int pid)
+	T Read(uint64_t address, int pid, bool cache = false)
 	{
-		return Read<T>(reinterpret_cast<void*>(address), pid);
+		return Read<T>(reinterpret_cast<void*>(address), pid, cache);
 	}
 
 	/**
@@ -295,7 +293,7 @@ public:
 	void ExecuteReadScatter(VMMDLL_SCATTER_HANDLE handle, int pid = 0);
 	void ExecuteWriteScatter(VMMDLL_SCATTER_HANDLE handle, int pid = 0);
 
-	bool IsValidPointer(long Pointer);
+	bool IsValidPointer(uint64_t Pointer);
 
 	/*the FPGA handle*/
 	VMM_HANDLE vHandle;

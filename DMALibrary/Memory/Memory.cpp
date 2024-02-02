@@ -707,9 +707,14 @@ bool Memory::Write(uintptr_t address, void* buffer, size_t size, int pid) const
 	return true;
 }
 
-bool Memory::Read(uintptr_t address, void* buffer, size_t size) const
+bool Memory::Read(uintptr_t address, void* buffer, size_t size, bool cache) const
 {
-	if (!VMMDLL_MemReadEx(this->vHandle, this->current_process.PID, address, (PBYTE)buffer, size, NULL, VMMDLL_FLAG_NOCACHE))
+	DWORD flags = VMMDLL_FLAG_NOCACHE;
+	if (cache) {
+		flags &= ~VMMDLL_FLAG_NOCACHE;  // Remove the NOCACHE flag if noCache is true
+	}
+
+	if (!VMMDLL_MemReadEx(this->vHandle, this->current_process.PID, address, (PBYTE)buffer, size, NULL, flags))
 	{
 		LOG("[!] Failed to read Memory at 0x%p\n", address);
 		return false;
@@ -717,9 +722,14 @@ bool Memory::Read(uintptr_t address, void* buffer, size_t size) const
 	return true;
 }
 
-bool Memory::Read(uintptr_t address, void* buffer, size_t size, int pid) const
+bool Memory::Read(uintptr_t address, void* buffer, size_t size, int pid, bool cache) const
 {
-	if (!VMMDLL_MemReadEx(this->vHandle, pid, address, (PBYTE)buffer, size, NULL, VMMDLL_FLAG_NOCACHE))
+	DWORD flags = VMMDLL_FLAG_NOCACHE;
+	if (cache) {
+		flags &= ~VMMDLL_FLAG_NOCACHE;  // Remove the NOCACHE flag if noCache is true
+	}
+
+	if (!VMMDLL_MemReadEx(this->vHandle, pid, address, (PBYTE)buffer, size, NULL, flags))
 	{
 		LOG("[!] Failed to read Memory at 0x%p\n", address);
 		return false;
@@ -797,6 +807,6 @@ void Memory::ExecuteWriteScatter(VMMDLL_SCATTER_HANDLE handle, int pid)
 	}
 }
 
-bool Memory::IsValidPointer(long Pointer) {
+bool Memory::IsValidPointer(uint64_t Pointer) {
 	return Pointer > 0x00010000 && Pointer < 0x7FFFFFFEFFFF;
 }
