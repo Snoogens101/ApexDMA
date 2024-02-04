@@ -3,14 +3,14 @@ Copiest of pastas using https://github.com/Metick/DMALibrary and https://github.
 ### Glow (MemWrite)
 ### Aimbot (Kmbox Net / Kmbox B+ Pro)
 
-Requires:
+Requires:  
 - DMA Card
 - Kmbox Net or Kmbox B+ Pro
 - FTD3XX.dll https://ftdichip.com/drivers/d3xx-drivers/
 - leechore.dll https://github.com/ufrisk/pcileech/releases/
 - vmm.dll https://github.com/ufrisk/pcileech/releases/
 
-Config:
+Config:  
 AimFOV=10 // Sets the Aimbot FOV  
 AimSmooth=2.0 // Sets the Aimbot Smooth  
 AimSmoothMaxIncrease=0.2 // Sets how many percent the Smoothing is allowed to increase as you get closer to the Target  
