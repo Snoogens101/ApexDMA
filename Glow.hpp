@@ -4,7 +4,6 @@
 #include "Player.hpp"
 #include "LocalPlayer.hpp"
 #include "Offsets.hpp"
-#include "GlowMode.hpp"
 #include "Camera.hpp"
 
 #include "DMALibrary/Memory/Memory.h"
@@ -12,9 +11,6 @@
 #include "Conversion.hpp"
 #include "HitboxType.hpp"
 #include <array>
-
-// Geometry
-#define DEG2RAD( x  )  ( (float)(x) * (float)(M_PI / 180.f) )
 
 struct Sense {
     // Variables
@@ -37,13 +33,6 @@ struct Sense {
     //Colors
     float InvisibleGlowColor[3] = { 1, 0, 0 };
     float VisibleGlowColor[3] = { 0, 1, 0 };
-    float LowGlowColor[3] = { 1, 1, 0 };
-
-    float RedShieldColor[3] = { 1, 0, 0 };
-    float PurpleShieldColor[3] = { 0.5, 0, 0.5 };
-    float BlueShieldColor[3] = { 0, 0.5, 1 };
-    float GreyShieldColor[3] = { 0.540, 0.545, 0.545 };
-
 
     Sense(std::vector<Player*>* Players, Camera* GameCamera, LocalPlayer* Myself) {
         this->Players = Players;
@@ -52,7 +41,7 @@ struct Sense {
     }
 
     void Initialize() {
-
+        // idk, nothing for now
     }
 
     void setCustomGlow(Player* Target, int enable, int wall, bool isVisible)
@@ -114,6 +103,7 @@ struct Sense {
         // Close the scatter handle
         mem.CloseScatterHandle(handle);
 
+        // We write this one after and separately because it writes to a byte of the same offset as another write in the Scatter
         uint64_t highlightIdAddress = basePointer + OFF_GLOW_HIGHLIGHT_ID;
         unsigned char valueA = settingIndex;
         mem.Write<unsigned char>(highlightIdAddress, valueA);

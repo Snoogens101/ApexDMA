@@ -28,7 +28,7 @@ extern "C" {
 //-----------------------------------------------------------------------------
 
 #ifdef _WIN32
-
+#include <Winsock2.h>
 #include <Windows.h>
 #define EXPORTED_FUNCTION                   __declspec(dllexport)
 typedef unsigned __int64                    QWORD, *PQWORD;

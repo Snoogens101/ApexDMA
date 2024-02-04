@@ -1,16 +1,20 @@
 #include <iostream>
+#include <thread>
+#include <unordered_set>
+
 #include "DMALibrary/Memory/Memory.h"
 
 #include "Level.hpp"
 #include "Player.hpp"
 #include "LocalPlayer.hpp"
 #include "Camera.hpp"
-#include "Glow.hpp"
-#include <thread>
-#include <unordered_set>
 
-// Base Address
-uintptr_t OFF_BASE = 0x0;
+#include "Glow.hpp"
+#include "Aimbot.hpp"
+
+#include "Config.hpp"
+
+#include <locale>
 
 // Game Objects
 Level* Map = new Level();
@@ -24,29 +28,30 @@ std::vector<Player*>* Players = new std::vector<Player*>;
 
 // Features
 Sense* ESP = new Sense(Players, GameCamera, Myself);
+Aimbot* AimAssist = new Aimbot(Myself, Players, GameCamera);
 
 void MiscBaseScatter(Level* map, LocalPlayer* myself, Camera* gameCamera, Sense* esp) {
 	// Create scatter handle
 	auto handle = mem.CreateScatterHandle();
 
 	// Scatter read request for Level
-	uint64_t levelAddress = OFF_BASE + OFF_LEVEL;
+	uint64_t levelAddress = mem.OFF_BASE + OFF_LEVEL;
 	mem.AddScatterReadRequest(handle, levelAddress, &map->NameBuffer, sizeof(map->NameBuffer));
 
 	// Scatter read request for LocalPlayer BasePointer
-	uint64_t localPlayerAddress = OFF_BASE + OFF_LOCAL_PLAYER;
+	uint64_t localPlayerAddress = mem.OFF_BASE + OFF_LOCAL_PLAYER;
 	mem.AddScatterReadRequest(handle, localPlayerAddress, &myself->BasePointer, sizeof(uint64_t));
 
 	// Scatter read request for LocalPlayer inAttack
-	uint64_t inAttackAddress = OFF_BASE + OFF_INATTACK;
+	uint64_t inAttackAddress = mem.OFF_BASE + OFF_INATTACK;
 	mem.AddScatterReadRequest(handle, inAttackAddress, &myself->IsInAttack, sizeof(bool));
 
 	// Scatter read request for GameCamera
-	uint64_t cameraRenderPointerAddress = OFF_BASE + OFF_VIEWRENDER;
+	uint64_t cameraRenderPointerAddress = mem.OFF_BASE + OFF_VIEWRENDER;
 	mem.AddScatterReadRequest(handle, cameraRenderPointerAddress, &gameCamera->RenderPointer, sizeof(uint64_t));
 
     // Scatter read request for HighlightSettingsPointer
-    uint64_t highlightSettingsPointerAddress = OFF_BASE + OFF_GLOW_HIGHLIGHTS;
+    uint64_t highlightSettingsPointerAddress = mem.OFF_BASE + OFF_GLOW_HIGHLIGHTS;
     mem.AddScatterReadRequest(handle, highlightSettingsPointerAddress, &esp->HighlightSettingsPointer, sizeof(uint64_t));
 
 	// Execute the scatter read
@@ -62,7 +67,7 @@ void PlayerBasePointerScatter(std::vector<Player*>& players) {
 
     for (size_t i = 0; i < players.size(); ++i) {
         int index = players[i]->Index;
-        uint64_t address = OFF_BASE + OFF_ENTITY_LIST + ((index + 1) << 5);
+        uint64_t address = mem.OFF_BASE + OFF_ENTITY_LIST + ((index + 1) << 5);
         mem.AddScatterReadRequest(handle, address, &players[i]->BasePointer, sizeof(uint64_t));
     }
 
@@ -264,6 +269,7 @@ bool UpdateCore() {
             // Updates //
             GameCamera->Update();
             ESP->Update();
+            AimAssist->Update();
         }
     }
     catch (const std::exception& ex) {
@@ -278,13 +284,23 @@ bool UpdateCore() {
 
 int main()
 {
+    std::cout << "-----------------------------" << std::endl;
+	std::cout << "Apex Legends DMA Paste" << std::endl;
+	std::cout << "-----------------------------" << std::endl;
+
+	// Initialize DMA
 	if (!mem.Init("r5apex.exe", true, false))
 	{
 		std::cout << "Failed to initilize DMA" << std::endl;
 		return 1;
 	}
     std::cout << "DMA initilized" << std::endl;
-    OFF_BASE = mem.GetBaseDaddy("r5apex.exe");
+
+    if (!mem.GetKeyboard()->InitKeyboard())
+    {
+        std::cout << "Failed to initialize keyboard hotkeys through kernel." << std::endl;
+        return 1;
+    }
 
     try {
         for (int i = 0; i < 70; i++)
@@ -293,16 +309,25 @@ int main()
         for (int i = 0; i < 15000; i++)
             Dummies->push_back(new Player(i, Myself));
 
+        std::cout << "-----------------------------" << std::endl;
+        std::locale::global(std::locale("C"));
+        Config config("config.cfg", AimAssist, GameCamera);
+        config.Update();
+        std::cout << "Config loaded" << std::endl;
+        std::cout << "Press Insert to refresh config" << std::endl;
+        std::cout << "-----------------------------" << std::endl;
+        GameCamera->Initialize();
         ESP->Initialize();
-
+        AimAssist->Initialize();
+        std::cout << "-----------------------------" << std::endl;
         std::cout << "Core initialized" << std::endl;
         std::cout << "-----------------------------" << std::endl;
 
-        // Create a thread to run UpdateCore
+        // Threads
         std::thread coreThread(UpdateCore);
-
-        // Wait for the UpdateCore thread to finish
+        std::thread configThread(&Config::UpdateOnDemand, &config);
         coreThread.join();
+        configThread.join();
     }
     catch (...) {}
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 // Core
-extern uintptr_t OFF_BASE;
 constexpr uint64_t OFF_LEVEL = 0x16d7de0;                         //[Miscellaneous]->LevelName
 constexpr uint64_t OFF_LOCAL_PLAYER = 0x2162818;                  //[Miscellaneous]->LocalPlayer
 constexpr uint64_t OFF_ENTITY_LIST = 0x1db4118;                   //[Miscellaneous]->cl_entitylist

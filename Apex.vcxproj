@@ -122,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>DMALibrary;$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>imgui;DMALibrary;$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -131,7 +131,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vmm.lib;leechcore.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;Ws2_32.lib;vmm.lib;leechcore.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>DMALibrary\libs</AdditionalLibraryDirectories>
     </Link>
@@ -143,9 +143,12 @@
     <ClCompile Include="DMALibrary\Memory\Registry.cpp" />
     <ClCompile Include="DMALibrary\Memory\Shellcode.cpp" />
     <ClCompile Include="DMALibrary\pch.cpp" />
+    <ClCompile Include="Config.hpp" />
+    <ClCompile Include="KmboxNet.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Aimbot.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Color.hpp" />
     <ClInclude Include="Conversion.hpp" />
@@ -159,8 +162,10 @@
     <ClInclude Include="DMALibrary\nt\structs.h" />
     <ClInclude Include="DMALibrary\pch.h" />
     <ClInclude Include="Glow.hpp" />
-    <ClInclude Include="GlowMode.hpp" />
+    <ClInclude Include="HidTable.hpp" />
     <ClInclude Include="HitboxType.hpp" />
+    <ClInclude Include="KmboxB.h" />
+    <ClInclude Include="KmboxNet.hpp" />
     <ClInclude Include="Level.hpp" />
     <ClInclude Include="LocalPlayer.hpp" />
     <ClInclude Include="Matrix.hpp" />

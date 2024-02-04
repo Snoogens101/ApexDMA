@@ -114,7 +114,7 @@ struct Player {
 
     std::string GetPlayerName() {
         uintptr_t NameIndex = mem.Read<uintptr_t>(BasePointer + OFF_NAME_INDEX);
-        uintptr_t NameOffset = mem.Read<uintptr_t>(OFF_BASE + OFF_NAME_LIST + ((NameIndex - 1) << 4));
+        uintptr_t NameOffset = mem.Read<uintptr_t>(mem.OFF_BASE + OFF_NAME_LIST + ((NameIndex - 1) << 4));
 
         char buffer[64] = { 0 };
         bool success = mem.Read(NameOffset, &buffer, 64);

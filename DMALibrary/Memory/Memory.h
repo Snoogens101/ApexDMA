@@ -297,6 +297,7 @@ public:
 
 	/*the FPGA handle*/
 	VMM_HANDLE vHandle;
+	uint64_t OFF_BASE;
 };
 
 inline Memory mem;

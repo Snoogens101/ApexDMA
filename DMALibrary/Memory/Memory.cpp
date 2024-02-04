@@ -225,6 +225,7 @@ reinit:
 		LOG("[!] Could not get base address!\n");
 		return false;
 	}
+	OFF_BASE = this->current_process.base_address;
 
 	this->current_process.base_size = GetBaseSize(process_name);
 	if (!this->current_process.base_size)

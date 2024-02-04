@@ -73,6 +73,13 @@ struct Vector3D {
         return *this;
     }
 
+    Vector3D& operator-=(const Vector3D& other) {
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
+		return *this;
+	}
+
     bool operator==(const Vector3D& other) const {
         float epsilon = 1e-5;
         return (std::abs(x - other.x) < epsilon)

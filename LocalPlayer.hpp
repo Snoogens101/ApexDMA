@@ -100,7 +100,7 @@ struct LocalPlayer {
 
         if (!IsDead && !IsKnocked && WeaponHandle) {
             uint64_t WeaponHandleMasked = WeaponHandle & 0xffff;
-            uint64_t WeaponEntity = mem.Read<uint64_t>(OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
+            uint64_t WeaponEntity = mem.Read<uint64_t>(mem.OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
 
             IsHoldingGrenade = OffHandWeaponID == -251 ? true : false;
 

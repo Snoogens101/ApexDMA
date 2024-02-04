@@ -2,11 +2,11 @@
 #include <random>
 
 namespace Conversion {
-    float ToGameUnits(float Meters) {
+    inline float ToGameUnits(float Meters) {
         return 39.37007874 * Meters;
     }
 
-    float ToMeters(float GameUnits) {
+    inline float ToMeters(float GameUnits) {
         return GameUnits / 39.37007874;
     }
 };

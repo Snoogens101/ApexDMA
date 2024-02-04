@@ -12,6 +12,7 @@
 
 // add headers that you want to pre-compile here
 #include "framework.h"
+#include <Winsock2.h>
 #include <Windows.h>
 #include <cstdio>
 #include <sstream>
