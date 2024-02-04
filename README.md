@@ -11,14 +11,14 @@ Requires:
 - vmm.dll https://github.com/ufrisk/pcileech/releases/
 
 Config:
-AimFOV=10 // Sets the Aimbot FOV
-AimSmooth=2.0 // Sets the Aimbot Smooth
-AimSmoothMaxIncrease=0.2 // Sets how many percent the Smoothing is allowed to increase as you get closer to the Target
-ResolutionX=2560 // Your Ingame Resolution
-ResolutionY=1440 // Your Ingame Resolution
-FOV=110 // Your Ingame Field of View
-KmboxType=Net // Your Kmbox type - either Net or BPro
-KmboxIP=192.168.2.188 // Your Kmbox Net IP - shown on its display
-KmboxPort=8336 // Your Kmbox Net Port - shown on its display
-KmboxUUID=24B75054 // Your Kmbox Net UUID - shown on its display
-KmboxComPort=3 // Your Kmbox B+ Pro COM Port
+AimFOV=10 // Sets the Aimbot FOV  
+AimSmooth=2.0 // Sets the Aimbot Smooth  
+AimSmoothMaxIncrease=0.2 // Sets how many percent the Smoothing is allowed to increase as you get closer to the Target  
+ResolutionX=2560 // Your Ingame Resolution  
+ResolutionY=1440 // Your Ingame Resolution  
+FOV=110 // Your Ingame Field of View  
+KmboxType=Net // Your Kmbox type - either Net or BPro  
+KmboxIP=192.168.2.188 // Your Kmbox Net IP - shown on its display  
+KmboxPort=8336 // Your Kmbox Net Port - shown on its display  
+KmboxUUID=24B75054 // Your Kmbox Net UUID - shown on its display  
+KmboxComPort=3 // Your Kmbox B+ Pro COM Port  
