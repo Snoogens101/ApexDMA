@@ -186,7 +186,7 @@ struct Aimbot {
             !target->IsValid() ||
             !target->IsCombatReady() ||
             !target->IsVisible ||
-            //!target->IsHostile ||
+            !target->IsHostile ||
             target->Distance2DToLocalPlayer < Conversion::ToGameUnits(MinDistance) ||
             target->Distance2DToLocalPlayer > Conversion::ToGameUnits(FinalDistance))
             return false;
