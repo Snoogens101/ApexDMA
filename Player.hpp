@@ -33,9 +33,6 @@ struct Player {
     Vector3D AbsoluteVelocity;
 
     int Health;
-    int MaxHealth;
-    int Shield;
-    int MaxShield;
 
     int LastTimeAimedAt;
     int LastTimeAimedAtPrevious;
@@ -52,8 +49,6 @@ struct Player {
 
     float DistanceToLocalPlayer;
     float Distance2DToLocalPlayer;
-
-    float ViewYaw;
 
     bool IsLockedOn;
 
@@ -112,28 +107,6 @@ struct Player {
         }
     }
 
-    std::string GetPlayerName() {
-        uintptr_t NameIndex = mem.Read<uintptr_t>(BasePointer + OFF_NAME_INDEX);
-        uintptr_t NameOffset = mem.Read<uintptr_t>(mem.OFF_BASE + OFF_NAME_LIST + ((NameIndex - 1) << 4));
-
-        char buffer[64] = { 0 };
-        bool success = mem.Read(NameOffset, &buffer, 64);
-
-        if (!success) {
-            return "Unknown";
-        }
-
-        return std::string(buffer);
-    }
-
-
-    float GetViewYaw() {
-        if (!IsDummy() || IsPlayer()) {
-            return ViewYaw;
-        }
-        return 0.0f;
-    }
-
     bool IsValid() {
         return BasePointer != 0 && Health > 0 && (IsPlayer() || IsDummy());
     }
@@ -159,22 +132,22 @@ struct Player {
         if (!mem.IsValidPointer(ModelPointer))
             return -1;
 
-        uint64_t StudioHDR = mem.Read<uint64_t>(ModelPointer + 0x8);
+        uint64_t StudioHDR = mem.Read<uint64_t>(ModelPointer + 0x8, true);
         if (!mem.IsValidPointer(StudioHDR + 0x34))
             return -1;
 
-        auto HitboxCache = mem.Read<uint16_t>(StudioHDR + 0x34);
+        auto HitboxCache = mem.Read<uint16_t>(StudioHDR + 0x34, true);
         auto HitboxArray = StudioHDR + ((uint16_t)(HitboxCache & 0xFFFE) << (4 * (HitboxCache & 1)));
         if (!mem.IsValidPointer(HitboxArray + 0x4))
             return -1;
 
-        auto IndexCache = mem.Read<uint16_t>(HitboxArray + 0x4);
+        auto IndexCache = mem.Read<uint16_t>(HitboxArray + 0x4, true);
         auto HitboxIndex = ((uint16_t)(IndexCache & 0xFFFE) << (4 * (IndexCache & 1)));
         auto BonePtr = HitboxIndex + HitboxArray + (static_cast<int>(HitBox) * 0x20);
         if (!mem.IsValidPointer(BonePtr))
             return -1;
 
-        return mem.Read<uint16_t>(BonePtr);
+        return mem.Read<uint16_t>(BonePtr, true);
     }
 
     Vector3D GetBonePosition(HitboxType HitBox) const {

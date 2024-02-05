@@ -157,21 +157,9 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
             mem.AddScatterReadRequest(handle, lastTimeAimedAtAddress, &player->LastTimeAimedAt, sizeof(int));
             mem.AddScatterReadRequest(handle, lastVisibleTimeAddress, &player->LastVisibleTime, sizeof(int));
 
-            // Scatter read requests for Health and Shield
+            // Scatter read requests for Health
             uint64_t healthAddress = player->BasePointer + OFF_HEALTH;
-            uint64_t maxHealthAddress = player->BasePointer + OFF_MAXHEALTH;
-            uint64_t shieldAddress = player->BasePointer + OFF_SHIELD;
-            uint64_t maxShieldAddress = player->BasePointer + OFF_MAXSHIELD;
             mem.AddScatterReadRequest(handle, healthAddress, &player->Health, sizeof(int));
-            mem.AddScatterReadRequest(handle, maxHealthAddress, &player->MaxHealth, sizeof(int));
-            mem.AddScatterReadRequest(handle, shieldAddress, &player->Shield, sizeof(int));
-            mem.AddScatterReadRequest(handle, maxShieldAddress, &player->MaxShield, sizeof(int));
-
-            if (!player->IsDummy() || player->IsPlayer()) {
-				// Scatter read request for ViewYaw
-                uint64_t viewYawAddress = player->BasePointer + OFF_YAW;
-				mem.AddScatterReadRequest(handle, viewYawAddress, &player->ViewYaw, sizeof(float));
-			}
 
             if (player->IsDummy() || player->IsPlayer()) {
                 // Scatter read request for ModelPointer

@@ -227,18 +227,10 @@ struct Aimbot {
         return 1.0;
     }
 
-    void RecoilControl(QAngle& Angle) {
-        QAngle CurrentPunch = QAngle(Myself->PunchAngles.x, Myself->PunchAngles.y).NormalizeAngles();
-
-        Angle.x -= CurrentPunch.x;
-        Angle.y -= CurrentPunch.y;
-    }
-
-
     int GetBestBone(Player* Target) {
         float NearestDistance = 999;
         int NearestBone = 2;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 3; i++) {
             HitboxType Bone = static_cast<HitboxType>(i);
             double DistanceFromCrosshair = CalculateDistanceFromCrosshair(Target->GetBonePosition(Bone));
             if (DistanceFromCrosshair < NearestDistance) {
@@ -274,15 +266,20 @@ struct Aimbot {
         return NearestTarget;
     }
 
+    float CalculateBulletSpeedScale(float smoothingValue) {
+        return 1.00f - (smoothingValue - 1) * 0.10f;
+    }
+
     Vector3D CalculatePredictedPosition(Vector3D targetPosition, Vector3D targetVelocity, float bulletSpeed, float bulletScale) {
         Vector3D playerPosition = Myself->CameraPosition;
         Vector3D enemyVelocity = targetVelocity;
+        float bulletSpeedScale = CalculateBulletSpeedScale(Smooth);
 
         // Initial distance to target
         float initialDistance = playerPosition.Distance(targetPosition);
 
         // Use adjusted bullet speed to calculate initial bullet travel time
-        float initialBulletTravelTime = initialDistance / bulletSpeed;
+        float initialBulletTravelTime = initialDistance / (bulletSpeed*bulletSpeedScale);
 
         // Scale Velocity based on Distance
         float minScale = 1.0f; // Minimum scale at 0 distance
@@ -290,12 +287,13 @@ struct Aimbot {
         float scale = 1.0f + ((std::min)(Conversion::ToMeters(initialDistance), 300.0f) / 300.0f) * (maxScale - minScale);
         enemyVelocity = targetVelocity.Multiply(scale);
 
+
         // Initial prediction of future position based on target velocity
         Vector3D initialFuturePosition = targetPosition.Add(enemyVelocity.Multiply(initialBulletTravelTime));
 
         // Refine bullet travel time using the distance to the initial predicted future position
         float refinedDistance = playerPosition.Distance(initialFuturePosition);
-        float refinedBulletTravelTime = refinedDistance / bulletSpeed;
+        float refinedBulletTravelTime = refinedDistance / (bulletSpeed * bulletSpeedScale);
 
         // Final prediction of target position using refined bullet travel time
         Vector3D finalPredictedPosition = targetPosition.Add(enemyVelocity.Multiply(refinedBulletTravelTime));

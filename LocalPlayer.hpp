@@ -17,7 +17,6 @@ struct LocalPlayer {
     Vector3D CameraPosition;
 
     Vector2D ViewAngles;
-    Vector2D PunchAngles;
 
     int WeaponIndex;
     float WeaponProjectileSpeed;
@@ -26,8 +25,6 @@ struct LocalPlayer {
 
     float ZoomFOV;
     float TargetZoomFOV;
-
-    float ViewYaw;
 
     void ResetPointer() {
         BasePointer = 0;
@@ -74,14 +71,6 @@ struct LocalPlayer {
         uint64_t viewAnglesAddress = BasePointer + OFF_VIEW_ANGLES;
 		mem.AddScatterReadRequest(handle, viewAnglesAddress, &ViewAngles, sizeof(Vector2D));
 
-        // Scatter read request for PunchAngles
-        uint64_t punchAnglesAddress = BasePointer + OFF_PUNCH_ANGLES;
-		mem.AddScatterReadRequest(handle, punchAnglesAddress, &PunchAngles, sizeof(Vector2D));
-
-        // Scatter read request for ViewYaw
-        uint64_t viewYawAddress = BasePointer + OFF_YAW;
-		mem.AddScatterReadRequest(handle, viewYawAddress, &ViewYaw, sizeof(float));
-
         // Scatter read request for WeaponHandle
         uint64_t WeaponHandle;
         uint64_t weaponHandleAddress = BasePointer + OFF_WEAPON_HANDLE;
@@ -100,7 +89,7 @@ struct LocalPlayer {
 
         if (!IsDead && !IsKnocked && WeaponHandle) {
             uint64_t WeaponHandleMasked = WeaponHandle & 0xffff;
-            uint64_t WeaponEntity = mem.Read<uint64_t>(mem.OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5));
+            uint64_t WeaponEntity = mem.Read<uint64_t>(mem.OFF_BASE + OFF_ENTITY_LIST + (WeaponHandleMasked << 5), true);
 
             IsHoldingGrenade = OffHandWeaponID == -251 ? true : false;
 
