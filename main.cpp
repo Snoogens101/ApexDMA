@@ -193,7 +193,7 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
 }
 
 // Core
-bool UpdateCore() {
+void UpdateCore() {
     static bool PlayersPopulated = false;
     try {
         while (true) {
@@ -275,10 +275,8 @@ bool UpdateCore() {
     catch (const std::exception& ex) {
         std::system("clear");
         std::cout << "Error: " << ex.what() << std::endl;
-        return true;
+        return;
     }
-
-    return false;
 }
 
 
@@ -292,14 +290,16 @@ int main()
 	if (!mem.Init("r5apex.exe", true, false))
 	{
 		std::cout << "Failed to initilize DMA" << std::endl;
-		return 1;
+        std::cout << "Press ENTER to continue...";
+        std::cin.get();
 	}
     std::cout << "DMA initilized" << std::endl;
 
     if (!mem.GetKeyboard()->InitKeyboard())
     {
         std::cout << "Failed to initialize keyboard hotkeys through kernel." << std::endl;
-        return 1;
+        std::cout << "Press ENTER to continue...";
+        std::cin.get();
     }
 
     try {
@@ -330,4 +330,8 @@ int main()
         configThread.join();
     }
     catch (...) {}
+
+    std::cout << "Press ENTER to exit...";
+    std::cin.get();  // Wait for user to press Enter
+    return 0;  // Ensure you return an int from main.
 }

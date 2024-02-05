@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include "KmboxNet.hpp"
 #include "KmboxB.h"
@@ -34,7 +35,7 @@ struct Aimbot {
     float ZoomScale = 1.2;
     float MinDistance = 1;
     float HipfireDistance = 50;
-    float ZoomDistance = 200;
+    float ZoomDistance = 300;
     int MinimumDelay = 1;
 
     LocalPlayer* Myself;
@@ -274,40 +275,33 @@ struct Aimbot {
     }
 
     Vector3D CalculatePredictedPosition(Vector3D targetPosition, Vector3D targetVelocity, float bulletSpeed, float bulletScale) {
-        const float gravity = 750.0f / bulletScale;
-        float timeStep = 0.1f; // Adjust time step for finer prediction granularity
-        Vector3D predictedPosition = targetPosition;
-        bool foundPrediction = false;
-        float baseBulletSpeed = 18000.0f;
-        float adjustmentFactor = 0.75f;
-        float speedRatio = baseBulletSpeed / bulletSpeed;
-        float adjustVelocityScale = Smooth * pow(speedRatio, adjustmentFactor);
-        Vector3D velocity = targetVelocity.Multiply(adjustVelocityScale);
+        Vector3D playerPosition = Myself->CameraPosition;
+        Vector3D enemyVelocity = targetVelocity;
 
+        // Initial distance to target
+        float initialDistance = playerPosition.Distance(targetPosition);
 
-        // Iterate to predict the position considering movement and bullet drop
-        for (float t = 0.1f; t < 1.f; t += timeStep) { // Arbitrary upper limit of 2 seconds for prediction
-            Vector3D futurePosition = Resolver::GetTargetPosition(targetPosition, velocity, t);
-            float bulletTravelTime = Resolver::GetTimeToTarget(targetPosition, futurePosition, bulletSpeed);
-            
-            if (bulletTravelTime <= t) {
-                float bulletDrop = Resolver::GetBasicBulletDrop(targetPosition, futurePosition, bulletSpeed, 1 / gravity);
-                futurePosition.z += bulletDrop; // Compensate for bullet drop
+        // Use adjusted bullet speed to calculate initial bullet travel time
+        float initialBulletTravelTime = initialDistance / bulletSpeed;
 
-                // If this position is reachable within the time it takes for the bullet to travel, use it
-                predictedPosition = futurePosition;
-                foundPrediction = true;
-                break; // Stop the loop once a suitable prediction is found
-            }
-        }
+        // Scale Velocity based on Distance
+        float minScale = 1.0f; // Minimum scale at 0 distance
+        float maxScale = 3.0f; // Maximum scale at 300 meters
+        float scale = 1.0f + ((std::min)(Conversion::ToMeters(initialDistance), 300.0f) / 300.0f) * (maxScale - minScale);
+        scale *= sqrt(Smooth);
+        enemyVelocity = targetVelocity.Multiply(scale);
 
-        if (!foundPrediction) {
-            // Fallback: Adjust initial target position for bullet drop without movement prediction
-            float initialBulletDrop = Resolver::GetBasicBulletDrop(targetPosition, targetPosition, bulletSpeed, 1 / gravity);
-            predictedPosition.z += initialBulletDrop;
-        }
+        // Initial prediction of future position based on target velocity
+        Vector3D initialFuturePosition = targetPosition.Add(enemyVelocity.Multiply(initialBulletTravelTime));
 
-        return predictedPosition;
+        // Refine bullet travel time using the distance to the initial predicted future position
+        float refinedDistance = playerPosition.Distance(initialFuturePosition);
+        float refinedBulletTravelTime = refinedDistance / bulletSpeed;
+
+        // Final prediction of target position using refined bullet travel time
+        Vector3D finalPredictedPosition = targetPosition.Add(enemyVelocity.Multiply(refinedBulletTravelTime));
+
+        return finalPredictedPosition;
     }
 
 };
