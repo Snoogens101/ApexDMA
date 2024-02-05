@@ -288,7 +288,6 @@ struct Aimbot {
         float minScale = 1.0f; // Minimum scale at 0 distance
         float maxScale = 3.0f; // Maximum scale at 300 meters
         float scale = 1.0f + ((std::min)(Conversion::ToMeters(initialDistance), 300.0f) / 300.0f) * (maxScale - minScale);
-        scale *= sqrt(Smooth);
         enemyVelocity = targetVelocity.Multiply(scale);
 
         // Initial prediction of future position based on target velocity
