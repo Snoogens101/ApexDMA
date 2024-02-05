@@ -278,7 +278,11 @@ struct Aimbot {
         float timeStep = 0.1f; // Adjust time step for finer prediction granularity
         Vector3D predictedPosition = targetPosition;
         bool foundPrediction = false;
-        Vector3D velocity = targetVelocity.Multiply(Smooth);
+        float baseBulletSpeed = 18000.0f;
+        float adjustmentFactor = 0.75f;
+        float speedRatio = baseBulletSpeed / bulletSpeed;
+        float adjustVelocityScale = Smooth * pow(speedRatio, adjustmentFactor);
+        Vector3D velocity = targetVelocity.Multiply(adjustVelocityScale);
 
 
         // Iterate to predict the position considering movement and bullet drop
