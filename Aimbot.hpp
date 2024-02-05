@@ -142,17 +142,24 @@ struct Aimbot {
             Vector2D Center = GameCamera->GetCenter();
             Vector2D RelativePosition = { ScreenPosition.x - Center.x, ScreenPosition.y - Center.y };
             float baseSmoothing = Smooth; // Base smoothing factor
+            float baseFOV = FOV; // Base field of view
             float maxPercentageIncrease = MaxSmoothIncrease; // Maximum increase is 20% of the base smoothing
             float maxIncrease = baseSmoothing * maxPercentageIncrease; // Absolute max increase in smoothing
+
+            // Randomize baseSmoothing within the range [-0.05, +0.05]
+            baseSmoothing += Utils::RandomRange(-0.05f, 0.05f);
+
+            // Randomize FOV within the range [-1, +1]
+            baseFOV = FOV + Utils::RandomRange(-1.0f, 1.0f);
 
             // Distance from the target, already calculated
             float distance = CalculateDistanceFromCrosshair(TargetPosition);
 
             // Calculate dynamic smoothing
             float dynamicSmoothing = baseSmoothing;
-            if (distance <= FOV) {
+            if (distance <= baseFOV) {
                 // Linear scaling: From base smoothing at fovDistance to base smoothing + maxIncrease at 1 pixel
-                float scale = 1.0f - (distance / FOV); // Normalize scale between 0 (at fovDistance) and 1 (at 1 pixel)
+                float scale = 1.0f - (distance / baseFOV); // Normalize scale between 0 (at fovDistance) and 1 (at 1 pixel)
                 dynamicSmoothing += maxIncrease * scale; // Apply scaled increase
             }
 
@@ -179,7 +186,7 @@ struct Aimbot {
             !target->IsValid() ||
             !target->IsCombatReady() ||
             !target->IsVisible ||
-            !target->IsHostile ||
+            //!target->IsHostile ||
             target->Distance2DToLocalPlayer < Conversion::ToGameUnits(MinDistance) ||
             target->Distance2DToLocalPlayer > Conversion::ToGameUnits(FinalDistance))
             return false;
@@ -271,10 +278,12 @@ struct Aimbot {
         float timeStep = 0.1f; // Adjust time step for finer prediction granularity
         Vector3D predictedPosition = targetPosition;
         bool foundPrediction = false;
+        Vector3D velocity = targetVelocity.Multiply(Smooth);
+
 
         // Iterate to predict the position considering movement and bullet drop
         for (float t = 0.1f; t < 1.f; t += timeStep) { // Arbitrary upper limit of 2 seconds for prediction
-            Vector3D futurePosition = Resolver::GetTargetPosition(targetPosition, targetVelocity, t);
+            Vector3D futurePosition = Resolver::GetTargetPosition(targetPosition, velocity, t);
             float bulletTravelTime = Resolver::GetTimeToTarget(targetPosition, futurePosition, bulletSpeed);
             
             if (bulletTravelTime <= t) {

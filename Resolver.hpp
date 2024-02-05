@@ -21,7 +21,7 @@ public:
     }
 
     static Vector3D GetTargetPosition(const Vector3D& targetPosition, Vector3D targetVelocity, float time) {
-        return targetPosition.Add((targetVelocity.Multiply(time))); // Subtract
+        return targetPosition.Add((targetVelocity.Multiply(time)));
     }
 
     static float GetTimeToTarget(Vector3D startPosition, Vector3D endPosition, float bulletSpeed) {
