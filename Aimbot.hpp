@@ -178,7 +178,7 @@ struct Aimbot {
             // Calculate the movement step for this frame
             Vector2D step = {
                 (RelativePosition.x / dynamicSmoothing),
-                (RelativePosition.y / (Myself->IsInAttack ? dynamicSmoothing * RecoilCompensation : dynamicSmoothing))
+                (RelativePosition.y / ((Myself->IsInAttack||mem.GetKeyboard()->IsKeyDown(0x01)) ? dynamicSmoothing * RecoilCompensation : dynamicSmoothing))
             };
 
             // If step is too small, don't move
@@ -305,6 +305,10 @@ struct Aimbot {
 
         // Final prediction of target position using refined bullet travel time
         Vector3D finalPredictedPosition = targetPosition.Add(enemyVelocity.Multiply(refinedBulletTravelTime));
+
+        // Bullet Drop Prediction
+        float drop = Resolver::GetBasicBulletDrop(targetPosition, finalPredictedPosition, bulletSpeed * bulletSpeedScale, bulletScale);
+        finalPredictedPosition.z += drop;
 
         return finalPredictedPosition;
     }

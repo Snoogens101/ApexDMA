@@ -79,7 +79,7 @@ bool c_keys::IsKeyDown(uint32_t virtual_key_code)
 {
 	if (gafAsyncKeyStateExport < 0x7FFFFFFFFFFF)
 		return false;
-	if (std::chrono::system_clock::now() - start > std::chrono::milliseconds(1))
+	if (std::chrono::system_clock::now() - start > std::chrono::milliseconds(5))
 	{
 		UpdateKeys();
 		start = std::chrono::system_clock::now();
