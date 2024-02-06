@@ -17,6 +17,7 @@ struct LocalPlayer {
     Vector3D CameraPosition;
 
     Vector2D ViewAngles;
+    Vector2D PunchAngles;
 
     int WeaponIndex;
     float WeaponProjectileSpeed;
@@ -70,6 +71,10 @@ struct LocalPlayer {
         // Scatter read request for ViewAngles
         uint64_t viewAnglesAddress = BasePointer + OFF_VIEW_ANGLES;
 		mem.AddScatterReadRequest(handle, viewAnglesAddress, &ViewAngles, sizeof(Vector2D));
+
+        // Scatter read request for PunchAngles
+        uint64_t punchAnglesAddress = BasePointer + OFF_PUNCH_ANGLES;
+        mem.AddScatterReadRequest(handle, punchAnglesAddress, &PunchAngles, sizeof(Vector2D));
 
         // Scatter read request for WeaponHandle
         uint64_t WeaponHandle;

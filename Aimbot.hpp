@@ -37,6 +37,7 @@ struct Aimbot {
     float HipfireDistance = 50;
     float ZoomDistance = 300;
     int MinimumDelay = 1;
+    float RecoilCompensation = 1.0f;
 
     LocalPlayer* Myself;
     std::vector<Player*>* Players;
@@ -136,6 +137,13 @@ struct Aimbot {
         }
     }
 
+    void RecoilControl(QAngle& Angle) {
+        QAngle CurrentPunch = QAngle(Myself->PunchAngles.x, Myself->PunchAngles.y).NormalizeAngles();
+
+        Angle.x -= CurrentPunch.x;
+        Angle.y -= CurrentPunch.y;
+    }
+
     void StartAiming(Player* Target) {
         Vector3D TargetPosition = CalculatePredictedPosition(Target->GetBonePosition(static_cast<HitboxType>(GetBestBone(Target))), Target->AbsoluteVelocity, Myself->WeaponProjectileSpeed, Myself->WeaponProjectileScale);
         Vector2D ScreenPosition = { 0, 0 };
@@ -170,7 +178,7 @@ struct Aimbot {
             // Calculate the movement step for this frame
             Vector2D step = {
                 (RelativePosition.x / dynamicSmoothing),
-                (RelativePosition.y / dynamicSmoothing)
+                (RelativePosition.y / (Myself->IsInAttack ? dynamicSmoothing * RecoilCompensation : dynamicSmoothing))
             };
 
             // If step is too small, don't move

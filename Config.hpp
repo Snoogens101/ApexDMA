@@ -58,6 +58,9 @@ private:
         if (key == "AimSmoothMaxIncrease") {
             AimAssistance->MaxSmoothIncrease = std::stof(value);
 		}
+        if (key == "AimRecoilCompensation") {
+            AimAssistance->RecoilCompensation = std::stof(value);
+        }
         if (key == "ResolutionX") {
 			GameCamera->ScreenSize.x = std::stoi(value);
 		}
