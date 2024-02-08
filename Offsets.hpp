@@ -53,3 +53,8 @@ constexpr uint64_t OFF_GLOW_THROUGH_WALL = 0x26C;                 //Script_Highl
 constexpr uint64_t OFF_GLOW_FIX = 0x268;
 constexpr uint64_t OFF_GLOW_HIGHLIGHT_ID = 0x28C;                 //[DT_HighlightSettings].m_highlightServerActiveStates    
 constexpr uint64_t OFF_GLOW_HIGHLIGHTS = 0xB93F2D0;               //HighlightSettings
+
+// Misc
+constexpr long OFF_TIME_BASE = 0x2048;                        //m_currentFramePlayer.timeBase
+constexpr long OFFSET_TRAVERSAL_START_TIME = 0x2ac0;          //[RecvTable.DT_LocalPlayerExclusive]->m_traversalStartTime
+constexpr long OFFSET_TRAVERSAL_PROGRESS = 0x2abc;            //[RecvTable.DT_LocalPlayerExclusive]->m_traversalProgress

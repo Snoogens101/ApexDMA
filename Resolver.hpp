@@ -26,12 +26,12 @@ public:
 
     static float GetTimeToTarget(Vector3D startPosition, Vector3D endPosition, float bulletSpeed) {
         float distance = (endPosition.Subtract(startPosition)).Magnitude();
-        return distance / bulletSpeed; // 
+        return distance / bulletSpeed;
     }
 
     static float GetBasicBulletDrop(Vector3D startPosition, Vector3D endPosition, float bulletSpeed, float bulletDropRate) {
         float time = GetTimeToTarget(startPosition, endPosition, bulletSpeed);
-        bulletDropRate *= 750.0f;
+        bulletDropRate *= 400.0f;
         return 0.5f * bulletDropRate * time * time;
     }
 

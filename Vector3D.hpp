@@ -90,4 +90,8 @@ struct Vector3D {
     bool operator!=(const Vector3D& other) const {
         return !(*this == other);
     }
+
+    Vector3D ModifyZ(float zOffset) {
+        return Vector3D{ x, y, z + zOffset };
+    }
 };

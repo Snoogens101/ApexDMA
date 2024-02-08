@@ -7,9 +7,11 @@
 #include "Vector2D.hpp"
 #include "Vector3D.hpp"
 #include "Matrix.hpp"
+#include "Camera.hpp"
 
 struct Player {
     LocalPlayer* Myself;
+    Camera* GameCamera;
 
     int Index;
     uint64_t BasePointer = 0;
@@ -38,10 +40,15 @@ struct Player {
     int LastTimeAimedAtPrevious;
     bool IsAimedAt;
 
-    float LastVisibleCheckTime;
+    uint64_t LastVisibleCheckTime = 0;
     int LastVisibleTime;
-    int LastTimeVisiblePrevious;
+    int LastTimeVisiblePrevious = 0;
+    bool LastVisibleState = false;
+    int VisCheckCount = 0;
+    const int VisCheckThreshold = 10;
     bool IsVisible;
+
+    int BiggestDifference = 0;
 
     bool IsLocal;
     bool IsAlly;
@@ -52,9 +59,10 @@ struct Player {
 
     bool IsLockedOn;
 
-    Player(int PlayerIndex, LocalPlayer* Me) {
+    Player(int PlayerIndex, LocalPlayer* Me, Camera* camera) {
         this->Index = PlayerIndex;
         this->Myself = Me;
+        this->GameCamera = camera;
     }
 
     uint64_t GetMilliseconds()
@@ -66,27 +74,31 @@ struct Player {
         return (CurrentPerformanceCount.QuadPart/*microseconds*/ * 1000/*milliseconds*/) / PerformanceFrequency.QuadPart/*microseconds*/;
     }
 
+
     bool VisCheck() {
-        static float LastVisibleCheckTime = 0.0f; // Ensure this is initialized appropriately
-        static bool lastVisibleState = false; // Store the last visibility state
-        float VisibleCheckTime = GetMilliseconds();
+        uint64_t VisibleCheckTime = GetMilliseconds();
 
-        if (VisibleCheckTime >= LastVisibleCheckTime + 5.0f) {
-            // Only update visibility state if enough time has passed
-            lastVisibleState = false; // Default to false at the start of each check
-
+        if (VisibleCheckTime >= LastVisibleCheckTime + 10) {
+            LastVisibleState = false;
             if (LastVisibleTime > LastTimeVisiblePrevious) {
-                lastVisibleState = true;
+                LastVisibleState = true;
+                VisCheckCount = 0;
             }
-            else if (LastVisibleTime < 0.0f && LastTimeVisiblePrevious > 0.0f) {
-                lastVisibleState = true;
+            else if (LastVisibleTime < 0 && LastTimeVisiblePrevious > 0) {
+                LastVisibleState = true;
+                VisCheckCount = 0;
             }
-            LastTimeVisiblePrevious = LastVisibleTime; // Update after checking
-            LastVisibleCheckTime = VisibleCheckTime; // Update the check time
+            else if(LastVisibleTime == LastTimeVisiblePrevious) {
+                VisCheckCount++;
+                if (VisCheckCount < VisCheckThreshold) {
+                    LastVisibleState = true;
+                }
+            }
+            LastTimeVisiblePrevious = LastVisibleTime;
+            LastVisibleCheckTime = VisibleCheckTime;
         }
 
-        // Return the last known visibility state if not enough time has passed for a new check
-        return lastVisibleState;
+        return LastVisibleState;
     }
 
     void Read() {
@@ -96,7 +108,7 @@ struct Player {
         IsAimedAt = LastTimeAimedAtPrevious < LastTimeAimedAt;
         LastTimeAimedAtPrevious = LastTimeAimedAt;
 
-        IsVisible = IsDummy() || IsAimedAt || VisCheck();
+        IsVisible = IsDummy() || IsAimedAt || VisCheck();    
 
         if (Myself->IsValid()) {
             IsLocal = Myself->BasePointer == BasePointer;
@@ -105,6 +117,7 @@ struct Player {
             DistanceToLocalPlayer = Myself->LocalOrigin.Distance(LocalOrigin);
             Distance2DToLocalPlayer = Myself->LocalOrigin.To2D().Distance(LocalOrigin.To2D());
         }
+
     }
 
     bool IsValid() {

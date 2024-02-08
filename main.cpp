@@ -1,20 +1,18 @@
 #include <iostream>
 #include <thread>
 #include <unordered_set>
+#include <locale>
 
 #include "DMALibrary/Memory/Memory.h"
-
 #include "Level.hpp"
 #include "Player.hpp"
 #include "LocalPlayer.hpp"
 #include "Camera.hpp"
-
 #include "Glow.hpp"
 #include "Aimbot.hpp"
-
 #include "Config.hpp"
+#include "Profiling.hpp"
 
-#include <locale>
 
 // Game Objects
 Level* Map = new Level();
@@ -67,7 +65,7 @@ void PlayerBasePointerScatter(std::vector<Player*>& players) {
 
     for (size_t i = 0; i < players.size(); ++i) {
         int index = players[i]->Index;
-        uint64_t address = mem.OFF_BASE + OFF_ENTITY_LIST + ((index + 1) << 5);
+        uint64_t address = mem.OFF_BASE + OFF_ENTITY_LIST + ((static_cast<unsigned long long>(index) + 1) << 5);
         mem.AddScatterReadRequest(handle, address, &players[i]->BasePointer, sizeof(uint64_t));
     }
 
@@ -181,10 +179,21 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
 }
 
 // Core
+std::chrono::microseconds TotalProfilingElapsed;
+std::chrono::microseconds LocalPlayerProfilingElapsed;
+std::chrono::microseconds PlayerPopulateProfilingElapsed;
+std::chrono::microseconds PlayerAttributesProfilingElapsed;
+std::chrono::microseconds GameCameraProfilingElapsed;
+std::chrono::microseconds ESPProfilingElapsed;
+std::chrono::microseconds AimAssistProfilingElapsed;
+std::chrono::microseconds ReadPlayersProfilingElapsed;
 void UpdateCore() {
     static bool PlayersPopulated = false;
     try {
         while (true) {
+            // Total Profiling Start
+            auto TotalProfilingStart = std::chrono::high_resolution_clock::now();
+
             // Initial Misc Reads //
             MiscBaseScatter(Map, Myself, GameCamera, ESP);
 
@@ -193,18 +202,20 @@ void UpdateCore() {
             if (!Map->IsPlayable) {
                 Players->clear();
                 PlayersPopulated = false;
-                //std::cout << "Map not playable" << std::endl;
                 continue;
             }
 
-            // Read Local Player //
-            Myself->Read();
+            // Local Player Update //
+            ProfileOperation([&]() {
+                Myself->Read();
+            }, LocalPlayerProfilingElapsed);
+
             if (!Myself->IsValid()) {
                 Players->clear();
                 PlayersPopulated = false;
-                //std::cout << "Invalid Local Player" << std::endl;
                 continue;
             }
+
 
             if (!Myself->ValidPosition()) {
 				Players->clear();
@@ -213,60 +224,107 @@ void UpdateCore() {
 				continue;
 			}
 
-            // Call the scatter function to read BasePointers, Team and Name for all players
-            if (Map->IsFiringRange){
-				PlayerBasePointerScatter(*Dummies);
-                ScatterReadTeamAndName(*Dummies);
-			}
-			else {
-				PlayerBasePointerScatter(*HumanPlayers);
-                ScatterReadTeamAndName(*HumanPlayers);
-			}
-
             // Populate Players //
 
-            if (!PlayersPopulated) {
-                if (Map->IsFiringRange) {
-                    for (int i = 0; i < Dummies->size(); i++) {
-                        Player* p = Dummies->at(i);
-                        if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
-                            Players->push_back(p);
-                    }
+            // Dummy Fix
+            if (Map->IsFiringRange) {
+                static auto lastExecTime = std::chrono::steady_clock::now() - std::chrono::seconds(5); // Subtract to ensure it runs the first time
+
+                // Check if 5 seconds have passed since the last execution
+                auto currentTime = std::chrono::steady_clock::now();
+                if (currentTime - lastExecTime >= std::chrono::seconds(5)) {
+                    PlayersPopulated = false;
+                    Players->clear();
+                    lastExecTime = currentTime;
                 }
-                else {
-                    for (int i = 0; i < HumanPlayers->size(); i++) {
-                        Player* p = HumanPlayers->at(i);
-                        if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
-                            Players->push_back(p);
-                    }
-                }
-                std::cout << "Players Populated" << std::endl;
-                PlayersPopulated = true;
             }
 
-            // Call the scatter function to read all player attributes
-            ScatterReadPlayerAttributes(*Players);
+            if (!PlayersPopulated) {
+                ProfileOperation([&]() {
+                    // Call the scatter function to read BasePointers, Team and Name for all players
+                    if (Map->IsFiringRange) {
+                        PlayerBasePointerScatter(*Dummies);
+                        ScatterReadTeamAndName(*Dummies);
+                    }
+                    else {
+                        PlayerBasePointerScatter(*HumanPlayers);
+                        ScatterReadTeamAndName(*HumanPlayers);
+                    }
 
-            // Update Players //
-            for (int i = 0; i < Players->size(); i++) {
-				Player* p = Players->at(i);
-				p->Read();
-                //std::cout << p->Index << ": " << p->BasePointer << " | " << p->IsValid() << std::endl;
-			}
+                    if (Map->IsFiringRange) {
+                        for (int i = 0; i < Dummies->size(); i++) {
+                            Player* p = Dummies->at(i);
+                            if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
+                                Players->push_back(p);
+                        }
+                    }
+                    else {
+                        for (int i = 0; i < HumanPlayers->size(); i++) {
+                            Player* p = HumanPlayers->at(i);
+                            if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
+                                Players->push_back(p);
+                        }
+                    }
+                    std::cout << "Players Populated" << std::endl;
+                    PlayersPopulated = true;
+                }, PlayerPopulateProfilingElapsed);
+            }
 
             // Updates //
-            GameCamera->Update();
-            ESP->Update();
-            AimAssist->Update();
+
+            // Update Player Attributes
+            ProfileOperation([&]() {
+                ScatterReadPlayerAttributes(*Players);
+            }, PlayerAttributesProfilingElapsed);
+
+            // Update Camera
+            ProfileOperation([&]() {
+                GameCamera->Update();
+            }, GameCameraProfilingElapsed);
+
+            // Update Players
+            ProfileOperation([&]() {
+                for (int i = 0; i < Players->size(); i++) {
+                    Player* p = Players->at(i);
+                    p->Read();
+                }
+            }, ReadPlayersProfilingElapsed);
+
+            // Update ESP
+            ProfileOperation([&]() {
+                ESP->Update();
+            }, ESPProfilingElapsed);
+
+            // Update AimAssist
+            ProfileOperation([&]() {
+                AimAssist->Update();
+            }, AimAssistProfilingElapsed);
+
+            // Total Profiling End
+            auto TotalProfilingEnd = std::chrono::high_resolution_clock::now();
+            TotalProfilingElapsed = std::chrono::duration_cast<std::chrono::microseconds>(TotalProfilingEnd - TotalProfilingStart);
         }
     }
     catch (const std::exception& ex) {
-        std::system("clear");
         std::cout << "Error: " << ex.what() << std::endl;
         return;
     }
 }
 
+void Profiling() {
+	while (true) {
+		std::cout << "---- Profiling ----" << std::endl;
+		std::cout << "Total: " << TotalProfilingElapsed.count() << "us" << std::endl;
+		std::cout << "LocalPlayer: " << LocalPlayerProfilingElapsed.count() << "us" << std::endl;
+		std::cout << "PlayerPopulate: " << PlayerPopulateProfilingElapsed.count() << "us" << std::endl;
+		std::cout << "PlayerAttributes: " << PlayerAttributesProfilingElapsed.count() << "us" << std::endl;
+        std::cout << "ReadPlayers: " << ReadPlayersProfilingElapsed.count() << "us" << std::endl;
+		std::cout << "GameCamera: " << GameCameraProfilingElapsed.count() << "us" << std::endl;
+		std::cout << "ESP: " << ESPProfilingElapsed.count() << "us" << std::endl;
+		std::cout << "AimAssist: " << AimAssistProfilingElapsed.count() << "us" << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+	}
+}
 
 int main()
 {
@@ -292,10 +350,10 @@ int main()
 
     try {
         for (int i = 0; i < 70; i++)
-            HumanPlayers->push_back(new Player(i, Myself));
+            HumanPlayers->push_back(new Player(i, Myself, GameCamera));
 
         for (int i = 0; i < 15000; i++)
-            Dummies->push_back(new Player(i, Myself));
+            Dummies->push_back(new Player(i, Myself, GameCamera));
 
         std::cout << "-----------------------------" << std::endl;
         std::locale::global(std::locale("C"));
@@ -313,13 +371,12 @@ int main()
 
         // Threads
         std::thread coreThread(UpdateCore);
-        std::thread configThread(&Config::UpdateOnDemand, &config);
+        std::thread profilingThread(Profiling);
         coreThread.join();
-        configThread.join();
     }
     catch (...) {}
 
     std::cout << "Press ENTER to exit...";
     std::cin.get();  // Wait for user to press Enter
-    return 0;  // Ensure you return an int from main.
+    return 0;
 }

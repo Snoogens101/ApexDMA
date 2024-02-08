@@ -107,7 +107,7 @@ struct Aimbot {
         else FinalDistance = HipfireDistance;
 
         if (!Myself->IsCombatReady()) { CurrentTarget = nullptr; return; }
-        if (!mem.GetKeyboard()->IsKeyDown(0x02) && !Myself->IsInAttack) { ReleaseTarget(); return; }
+        if (!mem.GetKeyboard()->IsKeyDown(VK_RBUTTON) && !Myself->IsInAttack) { ReleaseTarget(); return; }
         if (Myself->IsHoldingGrenade) { ReleaseTarget(); return; }
 
         Player* Target = CurrentTarget;
@@ -178,7 +178,7 @@ struct Aimbot {
             // Calculate the movement step for this frame
             Vector2D step = {
                 (RelativePosition.x / dynamicSmoothing),
-                (RelativePosition.y / ((Myself->IsInAttack||mem.GetKeyboard()->IsKeyDown(0x01)) ? dynamicSmoothing * RecoilCompensation : dynamicSmoothing))
+                (RelativePosition.y / ((Myself->IsInAttack||mem.GetKeyboard()->IsKeyDown(VK_LBUTTON)) ? dynamicSmoothing * RecoilCompensation : dynamicSmoothing))
             };
 
             // If step is too small, don't move
@@ -237,15 +237,16 @@ struct Aimbot {
 
     int GetBestBone(Player* Target) {
         float NearestDistance = 999;
-        int NearestBone = 2;
-        for (int i = 0; i < 3; i++) {
+        int i = 0;
+        int NearestBone = 0;
+        //for (int i = 0; i < 3; i++) {
             HitboxType Bone = static_cast<HitboxType>(i);
             double DistanceFromCrosshair = CalculateDistanceFromCrosshair(Target->GetBonePosition(Bone));
             if (DistanceFromCrosshair < NearestDistance) {
                 NearestBone = i;
                 NearestDistance = DistanceFromCrosshair;
             }
-        }
+        //}
         return NearestBone;
     }
 
@@ -258,6 +259,9 @@ struct Aimbot {
             Player* p = Players->at(i);
             if (!IsValidTarget(p)) continue;
             if (p->DistanceToLocalPlayer < Conversion::ToGameUnits(ZoomDistance)) {
+                float ScreenDistance = CalculateDistanceFromCrosshair(p->LocalOrigin);
+                if (ScreenDistance > FOV * 3) continue;
+
                 HitboxType BestBone = static_cast<HitboxType>(GetBestBone(p));
                 Vector3D TargetPosition = p->GetBonePosition(BestBone);
 
@@ -282,6 +286,10 @@ struct Aimbot {
         Vector3D playerPosition = Myself->CameraPosition;
         Vector3D enemyVelocity = targetVelocity;
         float bulletSpeedScale = CalculateBulletSpeedScale(Smooth);
+        // Bocek
+        if (Myself->WeaponIndex == 2) {
+            bulletSpeed = 20000;
+        }
 
         // Initial distance to target
         float initialDistance = playerPosition.Distance(targetPosition);
@@ -307,7 +315,7 @@ struct Aimbot {
         Vector3D finalPredictedPosition = targetPosition.Add(enemyVelocity.Multiply(refinedBulletTravelTime));
 
         // Bullet Drop Prediction
-        float drop = Resolver::GetBasicBulletDrop(targetPosition, finalPredictedPosition, bulletSpeed * bulletSpeedScale, bulletScale);
+        float drop = Resolver::GetBasicBulletDrop(Myself->CameraPosition, finalPredictedPosition, bulletSpeed, bulletScale);
         finalPredictedPosition.z += drop;
 
         return finalPredictedPosition;

@@ -140,5 +140,8 @@
     <ClInclude Include="KmboxB.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
+    <ClInclude Include="Profiling.hpp">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

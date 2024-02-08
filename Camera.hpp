@@ -41,6 +41,10 @@ struct Camera {
         transformed.x *= 1.0 / transformed.z;
         transformed.y *= 1.0 / transformed.z;
 
+        if (transformed.x < -1.05f || transformed.x > 1.05f || transformed.y < -1.05f || transformed.y > 1.05f) {
+			return false;
+		}
+
         ScreenPosition = Vector2D(ScreenSize.x / 2.0f + transformed.x * (ScreenSize.x / 2.0f), ScreenSize.y / 2.0f - transformed.y * (ScreenSize.y / 2.0f));
         return true;
     }

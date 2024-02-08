@@ -90,7 +90,7 @@ struct Sense {
         {
             uint64_t glowThroughWallAddress = basePointer + OFF_GLOW_THROUGH_WALL;
             int value = wall;
-            mem.AddScatterWriteRequest(handle, glowThroughWallAddress, &value, sizeof(value));
+            mem.AddScatterWriteRequest(handle, glowThroughWallAddress, &value, sizeof(int));
         }
 
         uint64_t glowFixAddress = basePointer + OFF_GLOW_FIX;
@@ -109,20 +109,36 @@ struct Sense {
         mem.Write<unsigned char>(highlightIdAddress, valueA);
 
         uint64_t highlightSettingsPtr = HighlightSettingsPointer;
-        mem.Write<decltype(highlightFunctionBits)>(highlightSettingsPtr + 0x34 * settingIndex + 0, highlightFunctionBits);
-        mem.Write<decltype(glowColorRGB)>(highlightSettingsPtr + 0x34 * settingIndex + 4, glowColorRGB);
+        mem.Write<decltype(highlightFunctionBits)>(highlightSettingsPtr + 0x34 * static_cast<unsigned long long>(settingIndex) + 0, highlightFunctionBits);
+        mem.Write<decltype(glowColorRGB)>(highlightSettingsPtr + 0x34 * static_cast<unsigned long long>(settingIndex) + 4, glowColorRGB);
 
     }
 
+    void removeCustomGlow(Player* Target) {
+        uint64_t basePointer = Target->BasePointer;
+
+        if (Target->GlowEnable != 0)
+        { 
+            mem.Write<int>(basePointer + OFF_GLOW_ENABLE, 0);
+        }
+    }
 
     void Update() {
         for (int i = 0; i < Players->size(); i++) {
             Player* Target = Players->at(i);
             if (!Target->IsValid()) continue;
             if (Target->IsDummy()) continue;
+            if (Target->IsLocal) continue;
             if (!Target->IsHostile) continue;
-
-            setCustomGlow(Target, 1, 1, Target->IsVisible);
+            Vector2D ScreenPosition = { 0, 0 };
+            if (GameCamera->WorldToScreen(Target->LocalOrigin.ModifyZ(30), ScreenPosition)) {
+                if (Target->DistanceToLocalPlayer <= Conversion::ToGameUnits(300)) {
+                    setCustomGlow(Target, 1, 1, Target->IsVisible);
+                }
+                else {
+                    removeCustomGlow(Target);
+                }
+            }
         }
     }
 };

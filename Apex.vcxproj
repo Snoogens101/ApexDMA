@@ -171,6 +171,7 @@
     <ClInclude Include="Matrix.hpp" />
     <ClInclude Include="Offsets.hpp" />
     <ClInclude Include="Player.hpp" />
+    <ClInclude Include="Profiling.hpp" />
     <ClInclude Include="QAngle.hpp" />
     <ClInclude Include="Resolver.hpp" />
     <ClInclude Include="Vector2D.hpp" />

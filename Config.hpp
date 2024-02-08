@@ -30,19 +30,6 @@ public:
         }
     }
 
-    void UpdateOnDemand() {
-        while (true) {
-            if (!mem.GetKeyboard()->IsKeyDown(0x2D)) {
-				Sleep(1000);
-				continue;
-			}
-            std::cout << "Updating config..." << std::endl;
-			Update();
-            std::cout << "Config updated." << std::endl;
-            Sleep(1000);
-        }
-    }
-
 private:
     std::string configFilePath;
     Aimbot* AimAssistance;
