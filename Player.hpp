@@ -2,6 +2,7 @@
 #include <string>
 #include "Offsets.hpp"
 #include "LocalPlayer.hpp"
+#include "Level.hpp"
 #include "DMALibrary/Memory/Memory.h"
 #include "HitboxType.hpp"
 #include "Vector2D.hpp"
@@ -46,8 +47,6 @@ struct Player {
     int VisCheckCount = 0;
     const int VisCheckThreshold = 10;
     bool IsVisible;
-
-    int BiggestDifference = 0;
 
     bool IsLocal;
     bool IsAlly;
@@ -101,7 +100,7 @@ struct Player {
     }
 
     void Read() {
-        if (!mem.IsValidPointer(BasePointer)) return;
+        if (!mem.IsValidPointer(BasePointer)) { BasePointer = 0; return; }
         if (!IsPlayer() && !IsDummy()) { BasePointer = 0; return; }
 
         IsAimedAt = LastTimeAimedAtPrevious < LastTimeAimedAt;
