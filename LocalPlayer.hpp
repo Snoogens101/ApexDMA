@@ -45,7 +45,7 @@ struct LocalPlayer {
 	}
 
     void Read() {
-        if (BasePointer == 0) return;
+        if (!mem.IsValidPointer(BasePointer)) return;
 
         auto handle = mem.CreateScatterHandle();
 
@@ -130,11 +130,11 @@ struct LocalPlayer {
     }
 
     bool IsValid() {
-        return BasePointer != 0;
+        return mem.IsValidPointer(BasePointer);
     }
 
     bool IsCombatReady() {
-        if (BasePointer == 0) return false;
+        if (!mem.IsValidPointer(BasePointer)) return false;
         if (IsDead) return false;
         if (IsKnocked) return false;
         return true;

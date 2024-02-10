@@ -53,6 +53,7 @@ constexpr uint64_t OFF_GLOW_THROUGH_WALL = 0x26C;                 //Script_Highl
 constexpr uint64_t OFF_GLOW_FIX = 0x268;
 constexpr uint64_t OFF_GLOW_HIGHLIGHT_ID = 0x28C;                 //[DT_HighlightSettings].m_highlightServerActiveStates    
 constexpr uint64_t OFF_GLOW_HIGHLIGHTS = 0xB93F2D0;               //HighlightSettings
+constexpr uint64_t OFF_GLOW_HIGHLIGHT_TYPE_SIZE = 0x34;
 
 // Misc
 constexpr long OFF_TIME_BASE = 0x2048;                        //m_currentFramePlayer.timeBase

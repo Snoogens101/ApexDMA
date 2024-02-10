@@ -137,13 +137,6 @@ struct Aimbot {
         }
     }
 
-    void RecoilControl(QAngle& Angle) {
-        QAngle CurrentPunch = QAngle(Myself->PunchAngles.x, Myself->PunchAngles.y).NormalizeAngles();
-
-        Angle.x -= CurrentPunch.x;
-        Angle.y -= CurrentPunch.y;
-    }
-
     void StartAiming(Player* Target) {
         Vector3D TargetPosition = CalculatePredictedPosition(Target->GetBonePosition(static_cast<HitboxType>(GetBestBone(Target))), Target->AbsoluteVelocity, Myself->WeaponProjectileSpeed, Myself->WeaponProjectileScale);
         Vector2D ScreenPosition = { 0, 0 };
@@ -237,16 +230,15 @@ struct Aimbot {
 
     int GetBestBone(Player* Target) {
         float NearestDistance = 999;
-        int i = 0;
-        int NearestBone = 0;
-        //for (int i = 0; i < 3; i++) {
+        int NearestBone = 1;
+        for (int i = 0; i < 3; i++) {
             HitboxType Bone = static_cast<HitboxType>(i);
             double DistanceFromCrosshair = CalculateDistanceFromCrosshair(Target->GetBonePosition(Bone));
             if (DistanceFromCrosshair < NearestDistance) {
                 NearestBone = i;
                 NearestDistance = DistanceFromCrosshair;
             }
-        //}
+        }
         return NearestBone;
     }
 

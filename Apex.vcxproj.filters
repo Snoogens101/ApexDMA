@@ -116,9 +116,6 @@
     <ClInclude Include="Conversion.hpp">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Color.hpp">
-      <Filter>Header Files\Util</Filter>
-    </ClInclude>
     <ClInclude Include="HitboxType.hpp">
       <Filter>Header Files\Util</Filter>
     </ClInclude>

@@ -150,7 +150,6 @@
   <ItemGroup>
     <ClInclude Include="Aimbot.hpp" />
     <ClInclude Include="Camera.hpp" />
-    <ClInclude Include="Color.hpp" />
     <ClInclude Include="Conversion.hpp" />
     <ClInclude Include="DMALibrary\framework.h" />
     <ClInclude Include="DMALibrary\libs\leechcore.h" />
