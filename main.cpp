@@ -203,9 +203,9 @@ void UpdateCore() {
             }
 
             // Local Player Update //
-            //ProfileOperation([&]() {
+            ProfileOperation([&]() {
                 Myself->Read();
-            //}, LocalPlayerProfilingElapsed);
+            }, LocalPlayerProfilingElapsed);
 
             if (!Myself->IsValid()) {
                 Players->clear();
@@ -236,7 +236,7 @@ void UpdateCore() {
             }
 
             if (!PlayersPopulated) {
-                //ProfileOperation([&]() {
+                ProfileOperation([&]() {
                     // Call the scatter function to read BasePointers, Team and Name for all players
                     if (Map->IsFiringRange) {
                         PlayerBasePointerScatter(*Dummies);
@@ -263,38 +263,38 @@ void UpdateCore() {
                     }
                     std::cout << "Players Populated" << std::endl;
                     PlayersPopulated = true;
-                //}, PlayerPopulateProfilingElapsed);
+                }, PlayerPopulateProfilingElapsed);
             }
 
             // Updates //
 
             // Update Player Attributes
-            //ProfileOperation([&]() {
+            ProfileOperation([&]() {
                 ScatterReadPlayerAttributes(*Players);
-            //}, PlayerAttributesProfilingElapsed);
+            }, PlayerAttributesProfilingElapsed);
 
             // Update Camera
-            //ProfileOperation([&]() {
+            ProfileOperation([&]() {
                 GameCamera->Update();
-            //}, GameCameraProfilingElapsed);
+            }, GameCameraProfilingElapsed);
 
             // Update Players
-            //ProfileOperation([&]() {
+            ProfileOperation([&]() {
                 for (int i = 0; i < Players->size(); i++) {
                     Player* p = Players->at(i);
                     p->Read();
                 }
-            //}, ReadPlayersProfilingElapsed);
+            }, ReadPlayersProfilingElapsed);
 
             // Update ESP
-            //ProfileOperation([&]() {
+            ProfileOperation([&]() {
                 ESP->Update();
-            //}, ESPProfilingElapsed);
+            }, ESPProfilingElapsed);
 
             // Update AimAssist
-            //ProfileOperation([&]() {
+            ProfileOperation([&]() {
                 AimAssist->Update();
-            //}, AimAssistProfilingElapsed);
+            }, AimAssistProfilingElapsed);
         }
     }
     catch (const std::exception& ex) {
@@ -306,7 +306,6 @@ void UpdateCore() {
 void Profiling() {
 	while (true) {
 		std::cout << "---- Profiling ----" << std::endl;
-		std::cout << "Total: " << TotalProfilingElapsed.count() << "us" << std::endl;
 		std::cout << "LocalPlayer: " << LocalPlayerProfilingElapsed.count() << "us" << std::endl;
 		std::cout << "PlayerPopulate: " << PlayerPopulateProfilingElapsed.count() << "us" << std::endl;
 		std::cout << "PlayerAttributes: " << PlayerAttributesProfilingElapsed.count() << "us" << std::endl;
