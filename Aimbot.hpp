@@ -80,10 +80,10 @@ struct Aimbot {
             MinimumDelay = 3;
 
             if (comPort.open(KmboxComPort, 115200)) {
-				std::cout << "Kmbox B+ Pro failed to initialize." << std::endl;
+                std::cout << "Kmbox B+ Pro initialized successfully." << std::endl;
 			}
             else {
-				std::cout << "Kmbox B+ Pro initialized successfully." << std::endl;
+                std::cout << "Kmbox B+ Pro failed to initialize." << std::endl;
 			}
 		
         }
