@@ -14,7 +14,7 @@
 #include "Spectator.hpp"
 #include "Profiling.hpp"
 
-#include "Render.hpp"
+//#include "Render.hpp"
 
 
 // Game Objects
