@@ -105,7 +105,7 @@ struct Player {
 
     void ValidCheck() {
         if (Valid) {
-            if (Valid > 0x7FFFFFFEFFFF || Valid < 0x7FF700000000) {
+            if (Valid > 0x7FFFFFFEFFFF || Valid < 0x7FF000000000) {
 				BasePointer = 0;
 				Valid = 0;
 			}
