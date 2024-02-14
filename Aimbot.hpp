@@ -29,15 +29,20 @@ struct Aimbot {
 
     float FinalDistance = 0;
 
+    bool Sticky = false;
     float Smooth = 2.0f;
     float MaxSmoothIncrease = 0.20f;
     float FOV = 10;
     float ZoomScale = 1.2;
-    float MinDistance = 1;
+    float MinDistance = 0;
     float HipfireDistance = 50;
     float ZoomDistance = 300;
     int MinimumDelay = 1;
     float RecoilCompensation = 1.0f;
+
+    int AimBotKey = 0x02;
+    int AimTriggerKey = 0x05;
+    int AimFlickKey = 0x06;
 
     LocalPlayer* Myself;
     std::vector<Player*>* Players;
@@ -101,21 +106,46 @@ struct Aimbot {
         }
     }
 
-    void Update() {
+    void LeftClick() {
+        if (KmboxType == "Net") {
+            kmNet_mouse_left(1);
+		    Sleep((int)Utils::RandomRange(MinimumDelay, 10));
+		    kmNet_mouse_left(0);
+		}
+		else if (KmboxType == "BPro") {
+
+		}
+	}
+
+    void Update_Aimbot() {
         if (Myself->IsZooming)
             FinalDistance = ZoomDistance;
         else FinalDistance = HipfireDistance;
+        if (mem.GetKeyboard()->IsKeyDown(AimTriggerKey)) { return; }
 
         if (!Myself->IsCombatReady()) { CurrentTarget = nullptr; return; }
-        if (!mem.GetKeyboard()->IsKeyDown(VK_RBUTTON) && !Myself->IsInAttack) { ReleaseTarget(); return; }
+        if (!mem.GetKeyboard()->IsKeyDown(AimBotKey) && !mem.GetKeyboard()->IsKeyDown(AimFlickKey) && !Myself->IsInAttack) { ReleaseTarget(); return; }
         if (Myself->IsHoldingGrenade) { ReleaseTarget(); return; }
 
         Player* Target = CurrentTarget;
-        if (!IsValidTarget(Target)) {
-            if (TargetSelected) {
-                return;
-            }
+        if (Sticky) {
+            if (!IsValidTarget(Target)) {
+                if (TargetSelected) {
+                    return;
+                }
 
+                Target = FindBestTarget();
+                if (!IsValidTarget(Target)) {
+                    ReleaseTarget();
+                    return;
+                }
+
+                CurrentTarget = Target;
+                CurrentTarget->IsLockedOn = true;
+                TargetSelected = true;
+            }
+        }
+        else {
             Target = FindBestTarget();
             if (!IsValidTarget(Target)) {
                 ReleaseTarget();
@@ -181,6 +211,149 @@ struct Aimbot {
 
             Move(step.x, step.y);
 		}
+
+        if (!mem.GetKeyboard()->IsKeyDown(AimFlickKey)) {
+			return;
+		}
+
+        std::vector<int> bones = { 0, 3 };
+        for (int boneIndex : bones) {
+            Vector3D bonePosition = CalculatePredictedPosition(Target->GetBonePosition(static_cast<HitboxType>(boneIndex)), Target->AbsoluteVelocity, Myself->WeaponProjectileSpeed, Myself->WeaponProjectileScale);
+
+            float boxWidth, boxDepth, boxHeight;
+
+            if (boneIndex == 0) { // Head
+                boxWidth = boxDepth = boxHeight = 5.0; // Assuming the head is roughly a cube
+            }
+            else if (boneIndex == 3) { // Body
+                boxWidth = 8.0; // X
+                boxDepth = 8.0; // Y
+                boxHeight = 12.0; // Z
+            }
+            else {
+                continue;
+            }
+
+            // Calculate corner points of the box around the bone in world space
+            std::vector<Vector3D> corners = {
+                {bonePosition.x + boxWidth, bonePosition.y + boxDepth, bonePosition.z + boxHeight},
+                {bonePosition.x - boxWidth, bonePosition.y - boxDepth, bonePosition.z - boxHeight},
+                {bonePosition.x + boxWidth, bonePosition.y - boxDepth, bonePosition.z + boxHeight},
+                {bonePosition.x - boxWidth, bonePosition.y + boxDepth, bonePosition.z - boxHeight},
+            };
+
+            float minX = FLT_MAX, maxX = -FLT_MAX, minY = FLT_MAX, maxY = -FLT_MAX;
+
+            for (const auto& corner : corners) {
+                Vector2D screenPos;
+                if (GameCamera->WorldToScreen(corner, screenPos)) {
+                    minX = (std::min)(minX, screenPos.x);
+                    maxX = (std::max)(maxX, screenPos.x);
+                    minY = (std::min)(minY, screenPos.y);
+                    maxY = (std::max)(maxY, screenPos.y);
+                }
+            }
+
+            Vector2D Center = GameCamera->GetCenter();
+            if (Center.x >= minX && Center.x <= maxX && Center.y >= minY && Center.y <= maxY) {
+                LeftClick();
+                break;
+            }
+        }
+    }
+
+    void Update_Triggerbot() {
+        if (Myself->IsZooming)
+            FinalDistance = ZoomDistance;
+        else FinalDistance = HipfireDistance;
+
+        if (!Myself->IsCombatReady()) { return; }
+        if (!mem.GetKeyboard()->IsKeyDown(AimTriggerKey)) { return; }
+        if (Myself->IsHoldingGrenade) { return; }
+
+        Player* Target = CurrentTarget;
+        if (Sticky) {
+            if (!IsValidTarget(Target)) {
+                if (TargetSelected) {
+                    return;
+                }
+
+                Target = FindBestTarget();
+                if (!IsValidTarget(Target)) {
+                    ReleaseTarget();
+                    return;
+                }
+
+                CurrentTarget = Target;
+                CurrentTarget->IsLockedOn = true;
+                TargetSelected = true;
+            }
+        }
+        else {
+            Target = FindBestTarget();
+            if (!IsValidTarget(Target)) {
+                ReleaseTarget();
+                return;
+            }
+
+            CurrentTarget = Target;
+            CurrentTarget->IsLockedOn = true;
+            TargetSelected = true;
+        }
+
+        if (TargetSelected && CurrentTarget) {
+            std::chrono::milliseconds Now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            if (Now >= LastAimTime + std::chrono::milliseconds(10)) {
+                StartTrigger(CurrentTarget);
+                LastAimTime = Now + std::chrono::milliseconds((int)Utils::RandomRange(MinimumDelay, 10));
+            }
+            return;
+        }
+    }
+
+    void StartTrigger(Player* Target) {
+        std::vector<int> bones = { 0, 3 };
+
+        for (int boneIndex : bones) {
+            Vector3D bonePosition = CalculatePredictedPosition(Target->GetBonePosition(static_cast<HitboxType>(boneIndex)), Target->AbsoluteVelocity, Myself->WeaponProjectileSpeed, Myself->WeaponProjectileScale);
+
+            float boxWidth, boxDepth, boxHeight;
+
+            if (boneIndex == 0) { // Head
+                boxWidth = boxDepth = boxHeight = 5.0; // Assuming the head is roughly a cube
+            }
+            else if (boneIndex == 3) { // Body
+                boxWidth = 8.0; // X
+                boxDepth = 8.0; // Y
+                boxHeight = 12.0; // Z
+            }
+
+            // Calculate corner points of the box around the bone in world space
+            std::vector<Vector3D> corners = {
+                {bonePosition.x + boxWidth, bonePosition.y + boxDepth, bonePosition.z + boxHeight},
+                {bonePosition.x - boxWidth, bonePosition.y - boxDepth, bonePosition.z - boxHeight},
+                {bonePosition.x + boxWidth, bonePosition.y - boxDepth, bonePosition.z + boxHeight},
+                {bonePosition.x - boxWidth, bonePosition.y + boxDepth, bonePosition.z - boxHeight},
+            };
+
+            float minX = FLT_MAX, maxX = -FLT_MAX, minY = FLT_MAX, maxY = -FLT_MAX;
+
+            for (const auto& corner : corners) {
+                Vector2D screenPos;
+                if (GameCamera->WorldToScreen(corner, screenPos)) {
+                    minX = (std::min)(minX, screenPos.x);
+                    maxX = (std::max)(maxX, screenPos.x);
+                    minY = (std::min)(minY, screenPos.y);
+                    maxY = (std::max)(maxY, screenPos.y);
+                }
+            }
+
+            Vector2D Center = GameCamera->GetCenter();
+            if (Center.x >= minX && Center.x <= maxX && Center.y >= minY && Center.y <= maxY) {
+                LeftClick();
+                break;
+            }
+        }
     }
 
     bool IsValidTarget(Player* target) {
@@ -251,9 +424,6 @@ struct Aimbot {
             Player* p = Players->at(i);
             if (!IsValidTarget(p)) continue;
             if (p->DistanceToLocalPlayer < Conversion::ToGameUnits(ZoomDistance)) {
-                float ScreenDistance = CalculateDistanceFromCrosshair(p->LocalOrigin);
-                if (ScreenDistance > FOV * 3) continue;
-
                 HitboxType BestBone = static_cast<HitboxType>(GetBestBone(p));
                 Vector3D TargetPosition = p->GetBonePosition(BestBone);
 

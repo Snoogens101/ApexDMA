@@ -11,7 +11,10 @@
 #include "Glow.hpp"
 #include "Aimbot.hpp"
 #include "Config.hpp"
+#include "Spectator.hpp"
 #include "Profiling.hpp"
+
+#include "Render.hpp"
 
 
 // Game Objects
@@ -27,6 +30,7 @@ std::vector<Player*>* Players = new std::vector<Player*>;
 // Features
 Sense* ESP = new Sense(Players, GameCamera, Myself);
 Aimbot* AimAssist = new Aimbot(Myself, Players, GameCamera);
+Spectator* Spectators = new Spectator(Players, Myself);
 
 void MiscBaseScatter(Level* map, LocalPlayer* myself, Camera* gameCamera, Sense* esp) {
 	// Create scatter handle
@@ -42,7 +46,7 @@ void MiscBaseScatter(Level* map, LocalPlayer* myself, Camera* gameCamera, Sense*
 
 	// Scatter read request for LocalPlayer inAttack
 	uint64_t inAttackAddress = mem.OFF_BASE + OFF_INATTACK;
-	mem.AddScatterReadRequest(handle, inAttackAddress, &myself->IsInAttack, sizeof(bool));
+	mem.AddScatterReadRequest(handle, inAttackAddress, &myself->IsInAttack, sizeof(uint32_t));
 
 	// Scatter read request for GameCamera
 	uint64_t cameraRenderPointerAddress = mem.OFF_BASE + OFF_VIEWRENDER;
@@ -110,6 +114,33 @@ void ScatterReadTeamAndName(std::vector<Player*>& players) {
     mem.CloseScatterHandle(handle);
 }
 
+void ScatterReadPlayerValidity(std::vector <Player*>& players) {
+	// Create scatter handle
+	auto handle = mem.CreateScatterHandle();
+
+	for (size_t i = 0; i < players.size(); ++i) {
+		Player* player = players[i];
+
+		// Verify that the BasePointer is not 0 before adding scatter read requests
+		if (mem.IsValidPointer(player->BasePointer)) {
+			// Scatter read request for IsPlayer
+			uint64_t validAddress = player->BasePointer;
+			mem.AddScatterReadRequest(handle, validAddress, &player->Valid, sizeof(uint64_t));
+		}
+	}
+
+	// Execute the scatter read
+	mem.ExecuteReadScatter(handle);
+
+	// Close the scatter handle
+	mem.CloseScatterHandle(handle);
+
+    for (int i = 0; i < Players->size(); i++) {
+        Player* p = Players->at(i);
+        p->ValidCheck();
+    }
+}
+
 void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
     // Create scatter handle
     auto handle = mem.CreateScatterHandle();
@@ -117,9 +148,14 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
     for (size_t i = 0; i < players.size(); ++i) {
         Player* player = players[i];
 
+        if (mem.IsValidPointer(player->BasePointer) && !player->IsPlayer() && !Map->IsFiringRange) {
+            player->BasePointer = 0;
+            continue;
+        }
+
         // Verify that the BasePointer is not 0 before adding scatter read requests
         if (mem.IsValidPointer(player->BasePointer)) {
-            if (!player->IsDummy()) {
+            if (player->IsPlayer()) {
                 // Scatter read request for IsDead
                 uint64_t isDeadAddress = player->BasePointer + OFF_LIFE_STATE;
                 mem.AddScatterReadRequest(handle, isDeadAddress, &player->IsDead, sizeof(bool));
@@ -127,39 +163,43 @@ void ScatterReadPlayerAttributes(std::vector<Player*>& players) {
                 // Scatter read request for IsKnocked
                 uint64_t isKnockedAddress = player->BasePointer + OFF_BLEEDOUT_STATE;
                 mem.AddScatterReadRequest(handle, isKnockedAddress, &player->IsKnocked, sizeof(bool));
+
+                // Scatter read request for AbsoluteVelocity
+                uint64_t absoluteVelocityAddress = player->BasePointer + OFF_ABSVELOCITY;
+                mem.AddScatterReadRequest(handle, absoluteVelocityAddress, &player->AbsoluteVelocity, sizeof(Vector3D));
+
+                // Scatter read requests for Glow
+                uint64_t glowEnableAddress = player->BasePointer + OFF_GLOW_ENABLE;
+                uint64_t glowThroughWallAddress = player->BasePointer + OFF_GLOW_THROUGH_WALL;
+                uint64_t highlightIDAddress = player->BasePointer + OFF_GLOW_HIGHLIGHT_ID + 1;
+                mem.AddScatterReadRequest(handle, glowEnableAddress, &player->GlowEnable, sizeof(int));
+                mem.AddScatterReadRequest(handle, glowThroughWallAddress, &player->GlowThroughWall, sizeof(int));
+                mem.AddScatterReadRequest(handle, highlightIDAddress, &player->HighlightID, sizeof(int));
+
+                // Scatter read request for Visibility
+                uint64_t lastTimeAimedAtAddress = player->BasePointer + OFF_LAST_AIMEDAT_TIME;
+                uint64_t lastVisibleTimeAddress = player->BasePointer + OFF_LAST_VISIBLE_TIME;
+                mem.AddScatterReadRequest(handle, lastTimeAimedAtAddress, &player->LastTimeAimedAt, sizeof(int));
+                mem.AddScatterReadRequest(handle, lastVisibleTimeAddress, &player->LastVisibleTime, sizeof(int));
+
+                // Scatter read request for Yaw
+                uint64_t viewYawAddress = player->BasePointer + OFF_YAW;
+                mem.AddScatterReadRequest(handle, viewYawAddress, &player->ViewYaw, sizeof(float));
             }
             else {
                 player->IsDead = false;
                 player->IsKnocked = false;
             }
 
-            // Scatter read request for LocalOrigin
-            uint64_t localOriginAddress = player->BasePointer + OFF_LOCAL_ORIGIN;
-            mem.AddScatterReadRequest(handle, localOriginAddress, &player->LocalOrigin, sizeof(Vector3D));
+            if (player->IsDummy() && Map->IsFiringRange || player->IsPlayer()) {
+                // Scatter read request for LocalOrigin
+                uint64_t localOriginAddress = player->BasePointer + OFF_LOCAL_ORIGIN;
+                mem.AddScatterReadRequest(handle, localOriginAddress, &player->LocalOrigin, sizeof(Vector3D));
 
-            // Scatter read request for AbsoluteVelocity
-            uint64_t absoluteVelocityAddress = player->BasePointer + OFF_ABSVELOCITY;
-            mem.AddScatterReadRequest(handle, absoluteVelocityAddress, &player->AbsoluteVelocity, sizeof(Vector3D));
+                // Scatter read requests for Health
+                uint64_t healthAddress = player->BasePointer + OFF_HEALTH;
+                mem.AddScatterReadRequest(handle, healthAddress, &player->Health, sizeof(int));
 
-            // Scatter read requests for Glow
-            uint64_t glowEnableAddress = player->BasePointer + OFF_GLOW_ENABLE;
-            uint64_t glowThroughWallAddress = player->BasePointer + OFF_GLOW_THROUGH_WALL;
-            uint64_t highlightIDAddress = player->BasePointer + OFF_GLOW_HIGHLIGHT_ID + 1;
-            mem.AddScatterReadRequest(handle, glowEnableAddress, &player->GlowEnable, sizeof(int));
-            mem.AddScatterReadRequest(handle, glowThroughWallAddress, &player->GlowThroughWall, sizeof(int));
-            mem.AddScatterReadRequest(handle, highlightIDAddress, &player->HighlightID, sizeof(int));
-
-            // Scatter read request for Visibility
-            uint64_t lastTimeAimedAtAddress = player->BasePointer + OFF_LAST_AIMEDAT_TIME;
-            uint64_t lastVisibleTimeAddress = player->BasePointer + OFF_LAST_VISIBLE_TIME;
-            mem.AddScatterReadRequest(handle, lastTimeAimedAtAddress, &player->LastTimeAimedAt, sizeof(int));
-            mem.AddScatterReadRequest(handle, lastVisibleTimeAddress, &player->LastVisibleTime, sizeof(int));
-
-            // Scatter read requests for Health
-            uint64_t healthAddress = player->BasePointer + OFF_HEALTH;
-            mem.AddScatterReadRequest(handle, healthAddress, &player->Health, sizeof(int));
-
-            if (player->IsDummy() || player->IsPlayer()) {
                 // Scatter read request for ModelPointer
                 uint64_t modelPointerAddress = player->BasePointer + OFF_STUDIOHDR;
                 mem.AddScatterReadRequest(handle, modelPointerAddress, &player->ModelPointer, sizeof(uint64_t));
@@ -203,9 +243,7 @@ void UpdateCore() {
             }
 
             // Local Player Update //
-            ProfileOperation([&]() {
-                Myself->Read();
-            }, LocalPlayerProfilingElapsed);
+            Myself->Read();
 
             if (!Myself->IsValid()) {
                 Players->clear();
@@ -236,65 +274,56 @@ void UpdateCore() {
             }
 
             if (!PlayersPopulated) {
-                ProfileOperation([&]() {
-                    // Call the scatter function to read BasePointers, Team and Name for all players
-                    if (Map->IsFiringRange) {
-                        PlayerBasePointerScatter(*Dummies);
-                        ScatterReadTeamAndName(*Dummies);
-                    }
-                    else {
-                        PlayerBasePointerScatter(*HumanPlayers);
-                        ScatterReadTeamAndName(*HumanPlayers);
-                    }
+                // Call the scatter function to read BasePointers, Team and Name for all players
+                if (Map->IsFiringRange) {
+                    PlayerBasePointerScatter(*Dummies);
+                    ScatterReadTeamAndName(*Dummies);
+                }
+                else {
+                    PlayerBasePointerScatter(*HumanPlayers);
+                    ScatterReadTeamAndName(*HumanPlayers);
+                }
 
-                    if (Map->IsFiringRange) {
-                        for (int i = 0; i < Dummies->size(); i++) {
-                            Player* p = Dummies->at(i);
-                            if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
-                                Players->push_back(p);
-                        }
+                if (Map->IsFiringRange) {
+                    for (int i = 0; i < Dummies->size(); i++) {
+                        Player* p = Dummies->at(i);
+                        if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
+                            Players->push_back(p);
                     }
-                    else {
-                        for (int i = 0; i < HumanPlayers->size(); i++) {
-                            Player* p = HumanPlayers->at(i);
-                            if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
-                                Players->push_back(p);
-                        }
+                }
+                else {
+                    for (int i = 0; i < HumanPlayers->size(); i++) {
+                        Player* p = HumanPlayers->at(i);
+                        if (p->BasePointer != 0 && (p->IsPlayer() || p->IsDummy()))
+                            Players->push_back(p);
                     }
-                    std::cout << "Players Populated" << std::endl;
-                    PlayersPopulated = true;
-                }, PlayerPopulateProfilingElapsed);
+                }
+                std::cout << "Players Populated" << std::endl;
+                PlayersPopulated = true;
             }
 
             // Updates //
+            // Update Player Validity
+            ScatterReadPlayerValidity(*Players);
 
             // Update Player Attributes
-            ProfileOperation([&]() {
-                ScatterReadPlayerAttributes(*Players);
-            }, PlayerAttributesProfilingElapsed);
+            ScatterReadPlayerAttributes(*Players);
 
             // Update Camera
-            ProfileOperation([&]() {
-                GameCamera->Update();
-            }, GameCameraProfilingElapsed);
+            GameCamera->Update();
 
             // Update Players
-            ProfileOperation([&]() {
-                for (int i = 0; i < Players->size(); i++) {
-                    Player* p = Players->at(i);
-                    p->Read();
-                }
-            }, ReadPlayersProfilingElapsed);
+            for (int i = 0; i < Players->size(); i++) {
+                Player* p = Players->at(i);
+                p->Read();
+            }
 
             // Update ESP
-            ProfileOperation([&]() {
-                ESP->Update();
-            }, ESPProfilingElapsed);
+            ESP->Update();
 
             // Update AimAssist
-            ProfileOperation([&]() {
-                AimAssist->Update();
-            }, AimAssistProfilingElapsed);
+            AimAssist->Update_Aimbot();
+            AimAssist->Update_Triggerbot();
         }
     }
     catch (const std::exception& ex) {
@@ -351,7 +380,6 @@ int main()
         Config config("config.cfg", AimAssist, GameCamera);
         config.Update();
         std::cout << "Config loaded" << std::endl;
-        std::cout << "Press Insert to refresh config" << std::endl;
         std::cout << "-----------------------------" << std::endl;
         GameCamera->Initialize();
         ESP->Initialize();
@@ -362,6 +390,7 @@ int main()
 
         // Threads
         std::thread coreThread(UpdateCore);
+        //std::thread renderThread(Render, Myself, Players, GameCamera, Spectators, AimAssist);
         //std::thread profilingThread(Profiling);
         coreThread.join();
     }

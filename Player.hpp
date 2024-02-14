@@ -36,6 +36,8 @@ struct Player {
 
     int Health;
 
+    float ViewYaw;
+
     int LastTimeAimedAt;
     int LastTimeAimedAtPrevious;
     bool IsAimedAt;
@@ -56,6 +58,8 @@ struct Player {
     float Distance2DToLocalPlayer;
 
     bool IsLockedOn;
+
+    uint64_t Valid = 0;
 
     Player(int PlayerIndex, LocalPlayer* Me, Level* Map) {
         this->Index = PlayerIndex;
@@ -99,6 +103,15 @@ struct Player {
         return LastVisibleState;
     }
 
+    void ValidCheck() {
+        if (Valid) {
+            if (Valid > 0x7FFFFFFEFFFF || Valid < 0x7FF700000000) {
+				BasePointer = 0;
+				Valid = 0;
+			}
+        }
+    }
+
     void Read() {
         if (!mem.IsValidPointer(BasePointer)) { BasePointer = 0; return; }
         if (!IsPlayer() && !IsDummy()) { BasePointer = 0; return; }
@@ -114,14 +127,8 @@ struct Player {
             IsHostile = !IsAlly;
             DistanceToLocalPlayer = Myself->LocalOrigin.Distance(LocalOrigin);
             Distance2DToLocalPlayer = Myself->LocalOrigin.To2D().Distance(LocalOrigin.To2D());
+            
         }
-
-        //if (BasePointer != Myself->BasePointer && IsPlayer()) {
-        //    std::cout << "--- Player " << Index << " ---" << std::endl;
-        //    std::cout << "GlowEnable: " << GlowEnable << " | GlowThroughWall: " << GlowThroughWall << " | HighlightID: " << HighlightID << std::endl;
-        //    std::cout << "GlowEnableAddr: " << std::hex << BasePointer + OFF_GLOW_ENABLE << " | GlowThroughWallAddr: " << BasePointer + OFF_GLOW_THROUGH_WALL << " | HighlightIDAddr: " << BasePointer + OFF_GLOW_HIGHLIGHT_ID + 1 << std::dec << std::endl;
-        //}
-
     }
 
     bool IsValid() {

@@ -30,12 +30,38 @@ public:
         }
     }
 
+    void Save() {
+        std::ofstream configFile(configFilePath);
+
+        if (!configFile.is_open()) {
+            std::cerr << "Failed to open config file: " << configFilePath << std::endl;
+            return;
+        }
+
+        configFile << "AimSticky=" << AimAssistance->Sticky << std::endl;
+        configFile << "AimFOV=" << AimAssistance->FOV << std::endl;
+        configFile << "AimSmooth=" << AimAssistance->Smooth << std::endl;
+        configFile << "AimSmoothMaxIncrease=" << AimAssistance->MaxSmoothIncrease << std::endl;
+        configFile << "AimRecoilCompensation=" << AimAssistance->RecoilCompensation << std::endl;
+        configFile << "AimBotKey=" << AimAssistance->AimBotKey << std::endl;
+        configFile << "AimTriggerKey=" << AimAssistance->AimTriggerKey << std::endl;
+        configFile << "AimFlickKey=" << AimAssistance->AimFlickKey << std::endl;
+    }
+
 private:
     std::string configFilePath;
     Aimbot* AimAssistance;
     Camera* GameCamera;
 
     void updateVariable(const std::string& key, const std::string& value) {
+        if (key == "AimSticky") {
+            if (value == "true") {
+                AimAssistance->Sticky = true;
+            }
+            else if (value == "false") {
+                AimAssistance->Sticky = false;
+            }
+		}
         if (key == "AimFOV") {
 			AimAssistance->FOV = std::stof(value);
 		}

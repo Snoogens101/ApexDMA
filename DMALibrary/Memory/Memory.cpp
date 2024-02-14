@@ -761,8 +761,7 @@ void Memory::CloseScatterHandle(VMMDLL_SCATTER_HANDLE handle)
 
 void Memory::AddScatterReadRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t address, void* buffer, size_t size)
 {
-	DWORD memoryPrepared = NULL;
-	if (!VMMDLL_Scatter_PrepareEx(handle, address, size, (PBYTE)buffer, &memoryPrepared))
+	if (!VMMDLL_Scatter_PrepareEx(handle, address, size, (PBYTE)buffer, NULL))
 	{
 		LOG("[!] Failed to prepare scatter read at 0x%p\n", address);
 	}

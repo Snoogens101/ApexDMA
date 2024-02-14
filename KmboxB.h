@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <cassert>
+#include <Winsock2.h>
 #include <windows.h>
 
 class _base_com   //虚基类 基本串口接口
