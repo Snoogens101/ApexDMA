@@ -25,6 +25,8 @@ struct LocalPlayer {
     float WeaponProjectileSpeed;
     float WeaponProjectileScale;
     bool IsHoldingGrenade;
+    bool IsReloading;
+    int Ammo;
 
     float ZoomFOV;
     float TargetZoomFOV;
@@ -125,6 +127,14 @@ struct LocalPlayer {
             // Scatter read request for WeaponProjectileScale
             uint64_t weaponProjectileScaleAddress = WeaponEntity + OFF_PROJECTILESCALE;
             mem.AddScatterReadRequest(handle, weaponProjectileScaleAddress, &WeaponProjectileScale, sizeof(float));
+
+            // Scatter read request for Weapon Ammo
+            uint64_t weaponAmmoAddress = WeaponEntity + OFF_WEAPON_AMMO;
+            mem.AddScatterReadRequest(handle, weaponAmmoAddress, &Ammo, sizeof(int));
+
+            // Scatter read request for IsReloading
+            uint64_t isReloadingAddress = WeaponEntity + OFF_RELOADING;
+            mem.AddScatterReadRequest(handle, isReloadingAddress, &IsReloading, sizeof(bool));
 
             // Execute the scatter read
             mem.ExecuteReadScatter(handle);

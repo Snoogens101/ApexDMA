@@ -2,7 +2,9 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <array>
 
+#include "HidTable.hpp"
 #include "KmboxNet.hpp"
 #include "KmboxB.h"
 
@@ -58,6 +60,8 @@ struct Aimbot {
         this->GameCamera = Cam;
     }
 
+    std::array<int, 4> Shotguns = { 104, 96, 97, 88 };
+
     std::string KmboxType = "Net";
     char KmboxIP[24] = "192.168.2.188";
     char KmboxPort[10] = "8336";
@@ -106,6 +110,25 @@ struct Aimbot {
         }
     }
 
+    void Reload() {
+		if (KmboxType == "Net") {
+            if (Myself->IsInAttack) {
+                kmNet_mask_mouse_left(1);
+                kmNet_mouse_left(0);
+            }
+
+			kmNet_keydown(KEY_R);
+            Sleep((int)Utils::RandomRange(MinimumDelay, 10));
+            kmNet_keyup(KEY_R);
+            kmNet_mask_mouse_left(0);
+		}
+		else if (KmboxType == "BPro") {
+			char cmd[1024] = { 0 };
+			sprintf_s(cmd, "km.press('r')\r\n");
+			comPort.write(cmd);
+		}
+    }
+
     void LeftClick() {
         if (KmboxType == "Net") {
             kmNet_mouse_left(1);
@@ -113,7 +136,18 @@ struct Aimbot {
 		    kmNet_mouse_left(0);
 		}
 		else if (KmboxType == "BPro") {
+            char cmd[1024] = { 0 };
+            sprintf_s(cmd, "km.click(0)\r\n");
+            comPort.write(cmd);
+		}
+	}
 
+    void Update_TacticalReload() {
+        if (!Myself->IsCombatReady()) { return; }
+		if (!Myself->IsReloading && !Myself->IsHoldingGrenade) {
+            if (Myself->Ammo == 1) {
+                Reload(); 
+            }
 		}
 	}
 
@@ -255,7 +289,8 @@ struct Aimbot {
             }
 
             Vector2D Center = GameCamera->GetCenter();
-            if (Center.x >= minX && Center.x <= maxX && Center.y >= minY && Center.y <= maxY) {
+            if ((Center.x >= (minX - 1)) && (Center.x <= (maxX + 1)) &&
+                (Center.y >= (minY - 1.5)) && (Center.y <= (maxY + 1.5))) {
                 LeftClick();
                 break;
             }
@@ -419,6 +454,7 @@ struct Aimbot {
         Player* NearestTarget = nullptr;
         float BestDistance = 9999;
         float BestFOV = (std::min)(FOV, FOV * (GetFOVScale() * ZoomScale));
+        bool Shotgun = std::find(Shotguns.begin(), Shotguns.end(), Myself->WeaponIndex) != Shotguns.end();
         Vector3D CameraPosition = Myself->CameraPosition;
         for (int i = 0; i < Players->size(); i++) {
             Player* p = Players->at(i);
@@ -429,6 +465,10 @@ struct Aimbot {
 
                 float Distance = CameraPosition.Distance(TargetPosition);
                 float FOV = CalculateDistanceFromCrosshair(TargetPosition);
+
+                if (Shotgun && Conversion::ToMeters(Distance) < 5.0f) {
+                    BestFOV *= 10;
+                }
 
                 if (FOV > BestFOV) continue;
                 if (Distance > BestDistance) continue;

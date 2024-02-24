@@ -4,6 +4,7 @@
 #include "Camera.hpp"
 #include "Spectator.hpp"
 #include "Aimbot.hpp"
+#include "Glow.hpp"
 #include "Config.hpp"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -32,17 +33,47 @@ ImFont* bold_font;
 ImFont* italic_font;
 ImFont* huge_font;
 
-std::vector<std::pair<std::string, int>> keyList = {
-    {"Left Mouse Button", 0x01},
-    {"Right Mouse Button", 0x02},
-    {"Middle Mouse Button", 0x04},
-    {"Side1 Mouse Button", 0x05},
-    {"Side2 Mouse Button", 0x06},
+// Define the display names and corresponding values separately
+const char* keyNames[] = {
+    "Left Mouse Button",
+    "Right Mouse Button",
+    "Middle Mouse Button",
+    "Side1 Mouse Button",
+    "Side2 Mouse Button",
 };
+int keyValues[] = {
+    0x01, // Left Mouse Button
+    0x02, // Right Mouse Button
+    0x04, // Middle Mouse Button
+    0x05, // Side1 Mouse Button
+    0x06, // Side2 Mouse Button
+};
+constexpr int keyCount = sizeof(keyNames) / sizeof(keyNames[0]);
+
+const char* glowNames[] = {
+    "Blue",
+    "Purple",
+    "Gold",
+};
+int glowValues[] = {
+    35, // Blue
+    36, // Purple
+    37, // Gold
+};
+constexpr int glowCount = sizeof(glowNames) / sizeof(glowNames[0]);
+
+int FindCurrentSelectionIndex(const int value, const int* keyValues, const int keyCount) {
+    for (int i = 0; i < keyCount; ++i) {
+        if (value == keyValues[i]) {
+            return i;
+        }
+    }
+    return 0; // Default to the first item if not found
+}
 
 
 // Main code
-void Render(LocalPlayer* Myself, std::vector<Player*>* Players, Camera* GameCamera, Spectator* Spectators, Aimbot* AimAssist)
+void Render(LocalPlayer* Myself, std::vector<Player*>* Players, Camera* GameCamera, Spectator* Spectators, Aimbot* AimAssist, Sense* ESP)
 {
     int width = GetSystemMetrics(SM_CXSCREEN);
     int height = GetSystemMetrics(SM_CYSCREEN);
@@ -76,16 +107,9 @@ void Render(LocalPlayer* Myself, std::vector<Player*>* Players, Camera* GameCame
     regular_font = io.Fonts->AddFontFromFileTTF("regular.otf", 12.0f);
     bold_font = io.Fonts->AddFontFromFileTTF("bold.otf", 12.0f);
     italic_font = io.Fonts->AddFontFromFileTTF("italic.otf", 12.0f);
-    huge_font = io.Fonts->AddFontFromFileTTF("bold.otf", 30.0f);
+    huge_font = io.Fonts->AddFontFromFileTTF("bold.otf", 20.0f);
 
     io.FontDefault = bold_font;
-
-    // Setup aim key map
-    std::string comboItems;
-    for (const auto& key : keyList) {
-        comboItems += key.first + '\0';
-    }
-    comboItems += '\0';
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -132,39 +156,75 @@ void Render(LocalPlayer* Myself, std::vector<Player*>* Players, Camera* GameCame
         fg_draw->AddText(ImVec2(10, 50), IM_COL32(255, 255, 255, 255), PerformanceString.c_str());
 
         // Settings Window, Fixed Width
-        ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(400, 430), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowPos(ImVec2(width - 410, 10), ImGuiCond_FirstUseEver);
         ImGui::Begin("Settings");
         // AimAssist Settings
+        ImGui::PushFont(huge_font);
         ImGui::Text("AimAssist Settings");
+        ImGui::PopFont();
         ImGui::Text("Sticky Aim:");
-        ImGui::Checkbox("##Sticky Aim:", &AimAssist->Sticky);
+        ImGui::SameLine();
+        if (ImGui::Checkbox("##Sticky Aim:", &AimAssist->Sticky)) {
+            Config::GetInstance().Save();
+        }
         ImGui::Text("Aim FOV:");
-        ImGui::SliderFloat("##Aim FOV:", &AimAssist->FOV, 1.0f, 50.0f);
+        if (ImGui::SliderFloat("##Aim FOV:", &AimAssist->FOV, 1.0f, 50.0f, "% .1f")) {
+            Config::GetInstance().Save();
+        }
         ImGui::Text("Smoothing:");
-        ImGui::SliderFloat("##Smoothing:", &AimAssist->Smooth, 1.0f, 10.0f);
+        if (ImGui::SliderFloat("##Smoothing:", &AimAssist->Smooth, 1.0f, 10.0f, "% .1f")) {
+            Config::GetInstance().Save();
+        }
         ImGui::Text("Max Smoothing Increase:");
-        ImGui::SliderFloat("##Max Smoothing Increase:", &AimAssist->MaxSmoothIncrease, 0.0f, 1.0f);
+        if (ImGui::SliderFloat("##Max Smoothing Increase:", &AimAssist->MaxSmoothIncrease, 0.0f, 1.0f, "% .2f")) {
+            Config::GetInstance().Save();
+        }
         ImGui::Text("Recoil:");
-        ImGui::SliderFloat("##Recoil:", &AimAssist->RecoilCompensation, 1.0f, 5.0f);
-  //      ImGui::Text("AimBot Key:");
-  //      ImGui::SameLine();
-  //      if (ImGui::Combo("##AimBotKey", &AimAssist->AimBotKey, comboItems.c_str())) {
-  //          // Update based on the selected item
-  //          AimAssist->AimBotKey = keyList[AimAssist->AimBotKey].second;
-  //      }
-  //      ImGui::Text("AimTrigger Key:");
-  //      ImGui::SameLine();
-  //      if (ImGui::Combo("##AimTriggerKey", &AimAssist->AimTriggerKey, comboItems.c_str())) {
-		//	// Update based on the selected item
-		//	AimAssist->AimTriggerKey = keyList[AimAssist->AimTriggerKey].second;
-		//}
-  //      ImGui::Text("AimFlick Key:");
-  //      ImGui::SameLine();
-  //      if (ImGui::Combo("##AimFlickKey", &AimAssist->AimFlickKey, comboItems.c_str())) {
-  //          // Update based on the selected item
-  //          AimAssist->AimFlickKey = keyList[AimAssist->AimFlickKey].second;
-  //      }
+        if (ImGui::SliderFloat("##Recoil:", &AimAssist->RecoilCompensation, 1.0f, 5.0f, "% .2f")) {
+            Config::GetInstance().Save();
+        }
+
+        // For AimBotKey
+        int aimBotKeyIndex = FindCurrentSelectionIndex(AimAssist->AimBotKey, keyValues, keyCount);
+        ImGui::Text("AimBot Key:");
+        if (ImGui::Combo("##AimBotKey", &aimBotKeyIndex, keyNames, keyCount)) {
+            AimAssist->AimBotKey = keyValues[aimBotKeyIndex];
+            Config::GetInstance().Save();
+        }
+
+        // For AimTriggerKey
+        int aimTriggerKeyIndex = FindCurrentSelectionIndex(AimAssist->AimTriggerKey, keyValues, keyCount);
+        ImGui::Text("AimTrigger Key:");
+        if (ImGui::Combo("##AimTriggerKey", &aimTriggerKeyIndex, keyNames, keyCount)) {
+            AimAssist->AimTriggerKey = keyValues[aimTriggerKeyIndex];
+            Config::GetInstance().Save();
+        }
+
+        // For AimFlickKey
+        int aimFlickKeyIndex = FindCurrentSelectionIndex(AimAssist->AimFlickKey, keyValues, keyCount);
+        ImGui::Text("AimFlick Key:");
+        if (ImGui::Combo("##AimFlickKey", &aimFlickKeyIndex, keyNames, keyCount)) {
+            AimAssist->AimFlickKey = keyValues[aimFlickKeyIndex];
+            Config::GetInstance().Save();
+        }
+
+        // Glow Settings
+        ImGui::PushFont(huge_font);
+        ImGui::Text("Glow Settings");
+        ImGui::PopFont();
+        ImGui::Text("Item Glow:");
+        ImGui::SameLine();
+        if (ImGui::Checkbox("##Item Glow:", &ESP->ItemGlow)) {
+            Config::GetInstance().Save();
+        }
+        int itemGlowIndex = FindCurrentSelectionIndex(ESP->MinimumItemRarity, glowValues, glowCount);
+        ImGui::Text("Minimum Item Rarity:");
+        if (ImGui::Combo("##Minimum Item Rarity", &itemGlowIndex, glowNames, glowCount)) {
+            ESP->MinimumItemRarity = glowValues[itemGlowIndex];
+            Config::GetInstance().Save();
+        }
+
         ImGui::End();
 
         // Rendering

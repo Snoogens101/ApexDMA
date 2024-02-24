@@ -46,6 +46,8 @@ constexpr uint64_t OFF_PROJECTILESPEED = 0x04e4 + 0x1998;         //projectile_l
 constexpr uint64_t OFF_OFFHAND_WEAPON = 0x1924;                   //m_latestNonOffhandWeapons
 constexpr uint64_t OFF_CURRENTZOOMFOV = 0x15b0 + 0x00b8;          //m_playerData + m_curZoomFOV
 constexpr uint64_t OFF_TARGETZOOMFOV = 0x15b0 + 0x00bc;           //m_playerData + m_targetZoomFOV
+constexpr uint64_t OFF_WEAPON_AMMO = 0x1560;                      //RecvTable.DT_WeaponX_LocalWeaponData -> m_ammoInClip
+constexpr uint64_t OFF_RELOADING = 0x157a;						  //[RecvTable.DT_WeaponX_LocalWeaponData]-> m_bInReload
 
 // Glow
 constexpr uint64_t OFF_GLOW_HIGHLIGHTS = 0xb943cb0;               //HighlightSettings

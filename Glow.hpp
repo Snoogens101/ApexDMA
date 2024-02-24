@@ -5,10 +5,9 @@
 #include "LocalPlayer.hpp"
 #include "Offsets.hpp"
 #include "Camera.hpp"
+#include "GlowMode.hpp"
 
 #include "DMALibrary/Memory/Memory.h"
-#include "Conversion.hpp"
-#include "HitboxType.hpp"
 #include <array>
 
 struct Sense {
@@ -20,12 +19,13 @@ struct Sense {
     std::vector<std::string> Spectators;
     uint64_t HighlightSettingsPointer;
 
+    bool ItemGlow = false;
+    // 34 = White, 35 = Blue, 36 = Purple, 37 = Gold, 38 = Red
+    int MinimumItemRarity = 36;
+
     //Colors
     float InvisibleGlowColor[3] = { 0, 1, 0 };
     float VisibleGlowColor[3] = { 1, 0, 0 };
-
-    // Checks
-    std::vector<int> HighlightIDInts = { 872415232 };
 
     Sense(std::vector<Player*>* Players, Camera* GameCamera, LocalPlayer* Myself) {
         this->Players = Players;
@@ -107,6 +107,21 @@ struct Sense {
     Vector2D DummyVector = { 0, 0 };
     void Update() {
         if (Myself->IsDead) return;
+
+        if (ItemGlow) {
+            uint64_t highlightSettingsPtr = HighlightSettingsPointer;
+            if (mem.IsValidPointer(highlightSettingsPtr)) {
+                uint64_t highlightSize = OFF_GLOW_HIGHLIGHT_TYPE_SIZE;
+                const GlowMode newGlowMode = { 137,138,35,127 };
+                for (int highlightId = MinimumItemRarity; highlightId < 39; highlightId++)
+                {
+                    const GlowMode oldGlowMode = mem.Read<GlowMode>(highlightSettingsPtr + (highlightSize * highlightId) + 0, true);
+                    if (newGlowMode != oldGlowMode) {
+                        mem.Write<GlowMode>(highlightSettingsPtr + (highlightSize * highlightId) + 0, newGlowMode);
+                    }
+                }
+            }
+        }
 
         for (int i = 0; i < Players->size(); i++) {
             Player* Target = Players->at(i);

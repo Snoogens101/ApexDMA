@@ -13,8 +13,9 @@
 #include "Config.hpp"
 #include "Spectator.hpp"
 #include "Profiling.hpp"
+#include "Misc.hpp"
 
-//#include "Render.hpp"
+#include "Render.hpp"
 
 
 // Game Objects
@@ -31,6 +32,7 @@ std::vector<Player*>* Players = new std::vector<Player*>;
 Sense* ESP = new Sense(Players, GameCamera, Myself);
 Aimbot* AimAssist = new Aimbot(Myself, Players, GameCamera);
 Spectator* Spectators = new Spectator(Players, Myself);
+Misc* Miscellanous = new Misc(Myself);
 
 void MiscBaseScatter(Level* map, LocalPlayer* myself, Camera* gameCamera, Sense* esp) {
 	// Create scatter handle
@@ -322,8 +324,11 @@ void UpdateCore() {
             ESP->Update();
 
             // Update AimAssist
+            AimAssist->Update_TacticalReload();
             AimAssist->Update_Aimbot();
             AimAssist->Update_Triggerbot();
+
+            Miscellanous->Update();
         }
     }
     catch (const std::exception& ex) {
@@ -377,9 +382,8 @@ int main()
 
         std::cout << "-----------------------------" << std::endl;
         std::locale::global(std::locale("C"));
-        Config config("config.cfg", AimAssist, GameCamera);
-        config.Update();
-        std::cout << "Config loaded" << std::endl;
+        Config::GetInstance().Initialize("config.cfg", AimAssist, GameCamera, ESP);
+        std::cout << "Config initialized" << std::endl;
         std::cout << "-----------------------------" << std::endl;
         GameCamera->Initialize();
         ESP->Initialize();
@@ -390,7 +394,7 @@ int main()
 
         // Threads
         std::thread coreThread(UpdateCore);
-        //std::thread renderThread(Render, Myself, Players, GameCamera, Spectators, AimAssist);
+        std::thread renderThread(Render, Myself, Players, GameCamera, Spectators, AimAssist, ESP);
         //std::thread profilingThread(Profiling);
         coreThread.join();
     }
