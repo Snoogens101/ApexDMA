@@ -361,10 +361,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/imgui
-/imgui.ini
-/italic.otf
-/bold.otf
-/regular.otf
-/Render.cpp
-/Render.hpp
