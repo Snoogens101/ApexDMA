@@ -40,6 +40,7 @@ const char* keyNames[] = {
     "Middle Mouse Button",
     "Side1 Mouse Button",
     "Side2 Mouse Button",
+    "OFF",
 };
 int keyValues[] = {
     0x01, // Left Mouse Button
@@ -47,15 +48,18 @@ int keyValues[] = {
     0x04, // Middle Mouse Button
     0x05, // Side1 Mouse Button
     0x06, // Side2 Mouse Button
+    0x00, // OFF
 };
 constexpr int keyCount = sizeof(keyNames) / sizeof(keyNames[0]);
 
 const char* glowNames[] = {
+    "White"
     "Blue",
     "Purple",
     "Gold",
 };
 int glowValues[] = {
+    34, // White
     35, // Blue
     36, // Purple
     37, // Gold
@@ -192,6 +196,12 @@ void Render(LocalPlayer* Myself, std::vector<Player*>* Players, Camera* GameCame
             AimAssist->AimBotKey = keyValues[aimBotKeyIndex];
             Config::GetInstance().Save();
         }
+        int aimBotKey2Index = FindCurrentSelectionIndex(AimAssist->AimBotKey2, keyValues, keyCount);
+        ImGui::Text("AimBot Key2:");
+        if (ImGui::Combo("##AimBotKey2", &aimBotKey2Index, keyNames, keyCount)) {
+            AimAssist->AimBotKey2 = keyValues[aimBotKey2Index];
+            Config::GetInstance().Save();
+        }
 
         // For AimTriggerKey
         int aimTriggerKeyIndex = FindCurrentSelectionIndex(AimAssist->AimTriggerKey, keyValues, keyCount);
@@ -224,6 +234,43 @@ void Render(LocalPlayer* Myself, std::vector<Player*>* Players, Camera* GameCame
             ESP->MinimumItemRarity = glowValues[itemGlowIndex];
             Config::GetInstance().Save();
         }
+
+        //KmBox Settings
+        const char* items[] = { "BPro", "Net" };
+
+int currentItem = (AimAssist->KmboxType == "BPro") ? 0 : 1;
+
+if (ImGui::Combo("Kmbox Type", &currentItem, items, IM_ARRAYSIZE(items)))
+{
+    AimAssist->KmboxType = items[currentItem];
+    Config::GetInstance().Save();
+}
+if (AimAssist->KmboxType == u8"BPro")
+{
+    ImGui::Text("KmBoxComPort:");
+    ImGui::InputInt("", &AimAssist->KmboxComPort);
+    Config::GetInstance().Save();
+}
+else if (AimAssist->KmboxType == "Net")
+{
+    ImGui::InputText("Kmbox IP", AimAssist->KmboxIP, IM_ARRAYSIZE(AimAssist->KmboxIP));
+    Config::GetInstance().Save();
+    ImGui::InputText("Kmbox Port", AimAssist->KmboxPort, IM_ARRAYSIZE(AimAssist->KmboxPort));
+    Config::GetInstance().Save();
+    ImGui::InputText("Kmbox UUID", AimAssist->KmboxUUID, IM_ARRAYSIZE(AimAssist->KmboxUUID));
+    Config::GetInstance().Save();
+}
+
+if (ImGui::Button("InitializeKmBox")) {
+    AimAssist->Initialize(); // 手动执行初始化
+}
+if (AimAssist->KmboxInitialized) {
+    ImGui::TextColored(ImVec4(0, 1, 0, 1), "KmBox initialization succeeded"); // GREEN
+}
+else
+{
+    ImGui::TextColored(ImVec4(1, 0, 0, 1), u8"KmBox initialization failed"); // RED
+}
 
         ImGui::End();
 
