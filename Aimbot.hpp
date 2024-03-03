@@ -43,6 +43,7 @@ struct Aimbot {
     float RecoilCompensation = 1.0f;
 
     int AimBotKey = 0x02;
+    int AimBotKey2 = 0x02;
     int AimTriggerKey = 0x05;
     int AimFlickKey = 0x06;
 
@@ -106,6 +107,7 @@ struct Aimbot {
         else if (KmboxType == "BPro") {
             char cmd[1024] = { 0 };
             sprintf_s(cmd, "km.move(%d, %d, 10)\r\n", x, y);
+		Sleep((int)Utils::RandomRange(MinimumDelay, 1));
             comPort.write(cmd);
         }
     }
@@ -125,6 +127,7 @@ struct Aimbot {
 		else if (KmboxType == "BPro") {
 			char cmd[1024] = { 0 };
 			sprintf_s(cmd, "km.press('r')\r\n");
+			Sleep((int)Utils::RandomRange(MinimumDelay, 10));
 			comPort.write(cmd);
 		}
     }
@@ -138,6 +141,7 @@ struct Aimbot {
 		else if (KmboxType == "BPro") {
             char cmd[1024] = { 0 };
             sprintf_s(cmd, "km.click(0)\r\n");
+			Sleep((int)Utils::RandomRange(MinimumDelay, 10));
             comPort.write(cmd);
 		}
 	}
@@ -159,6 +163,56 @@ struct Aimbot {
 
         if (!Myself->IsCombatReady()) { CurrentTarget = nullptr; return; }
         if (!mem.GetKeyboard()->IsKeyDown(AimBotKey) && !mem.GetKeyboard()->IsKeyDown(AimFlickKey) && !Myself->IsInAttack) { ReleaseTarget(); return; }
+        if (Myself->IsHoldingGrenade) { ReleaseTarget(); return; }
+
+        Player* Target = CurrentTarget;
+        if (Sticky) {
+            if (!IsValidTarget(Target)) {
+                if (TargetSelected) {
+                    return;
+                }
+
+                Target = FindBestTarget();
+                if (!IsValidTarget(Target)) {
+                    ReleaseTarget();
+                    return;
+                }
+
+                CurrentTarget = Target;
+                CurrentTarget->IsLockedOn = true;
+                TargetSelected = true;
+            }
+        }
+        else {
+            Target = FindBestTarget();
+            if (!IsValidTarget(Target)) {
+                ReleaseTarget();
+                return;
+            }
+
+            CurrentTarget = Target;
+            CurrentTarget->IsLockedOn = true;
+            TargetSelected = true;
+        }
+
+        if (TargetSelected && CurrentTarget) {
+            std::chrono::milliseconds Now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            if (Now >= LastAimTime + std::chrono::milliseconds(10)) {
+                StartAiming(CurrentTarget);
+                LastAimTime = Now + std::chrono::milliseconds((int)Utils::RandomRange(MinimumDelay, 10));
+            }
+            return;
+        }
+    }
+
+    void Update_Aimbot2() {
+        if (Myself->IsZooming)
+            FinalDistance = ZoomDistance;
+        else FinalDistance = HipfireDistance;
+        if (mem.GetKeyboard()->IsKeyDown(AimTriggerKey)) { return; }
+
+        if (!Myself->IsCombatReady()) { CurrentTarget = nullptr; return; }
+        if (!mem.GetKeyboard()->IsKeyDown(AimBotKey2) && !mem.GetKeyboard()->IsKeyDown(AimFlickKey) && !Myself->IsInAttack) { ReleaseTarget(); return; }
         if (Myself->IsHoldingGrenade) { ReleaseTarget(); return; }
 
         Player* Target = CurrentTarget;
